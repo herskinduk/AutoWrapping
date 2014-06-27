@@ -1,8 +1,8 @@
 <#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ assembly name="System.Configuration" #>
-<#@ assembly name=" EDIT HERE - PATH TO: \lib\Sitecore.Kernel.dll" #>
-<#@ assembly name=" EDIT HERE - PATH TO: \lib\Lucene.Net.dll" #>
+<#@ assembly name="$(SolutionDir)[replace with realtive path to Sitecore.Kernel.dll]" #>
+<#@ assembly name="$(SolutionDir)[replace with realtive path to Lucene.Net.dll]" #>
 <#@ import namespace="Sitecore" #>
 <#@ import namespace="System.Reflection" #>
 <#@ import namespace="System.Text.RegularExpressions" #>
