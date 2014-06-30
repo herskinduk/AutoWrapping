@@ -26,6 +26,7 @@ AutoWrapping.tt generates a file called AutoWrapping.cs containing interfaces an
 
 Here is a code example of how you could use the interfaces and wrappers:
 
+    using Sitecore;
     using Sitecore.Diagnostics;
 
     namespace Example
@@ -37,25 +38,37 @@ Here is a code example of how you could use the interfaces and wrappers:
             {
                 Log.Info(message, this);
             }
+
+            public string ReadContextItemName()
+            {
+                return Sitecore.Context.Item.Name;
+            }
         }
 
         // GOOD
         public class InjectedDependencies
         {
-            private readonly ILog _log; 
+            private readonly ILog _log;
+            private readonly IContext _context; 
 
             public InjectedDependencies()
                 : this(new LogWrapper())
             { }
 
-            public InjectedDependencies(ILog log)
+            public InjectedDependencies(ILog log, IContext context)
             {
                 _log = log;
+                _context = context;
             }
 
             public void LogMessage(string message)
             {
                 _log.Info(message, this);
+            }
+
+            public void ReadContextItemName()
+            {
+                return _context.Item.Name; // Note item here is an IItem
             }
         }
     }
