@@ -52,7 +52,7 @@ Here is a code example of how you could use the interfaces and wrappers:
             private readonly IContext _context; 
 
             public InjectedDependencies()
-                : this(new LogWrapper())
+                : this(new LogWrapper(), new ContextWrapper())
             { }
 
             public InjectedDependencies(ILog log, IContext context)
@@ -66,7 +66,7 @@ Here is a code example of how you could use the interfaces and wrappers:
                 _log.Info(message, this);
             }
 
-            public void ReadContextItemName()
+            public string ReadContextItemName()
             {
                 return _context.Item.Name; // Note item here is an IItem
             }
