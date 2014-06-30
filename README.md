@@ -4,7 +4,7 @@ AutoWrapping
 Purpose
 -------
 
-Makeing Sitecore easier to test by providing the missing abstrations.
+Making Sitecore easier to test by providing the missing abstrations.
 
 Usage
 -----
@@ -55,7 +55,7 @@ Here is a code example of how you could use the interfaces and wrappers:
 
             public void LogMessage(string message)
             {
-                Log.Info(message, this);
+                _log.Info(message, this);
             }
         }
     }
