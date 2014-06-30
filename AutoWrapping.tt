@@ -194,7 +194,6 @@ public string InterfaceFullname(Type type)
         return type.Namespace + "." + InterfaceName( type);
 }
 
-
 public string WrapperClassName(Type type)
 {
         return type.Name + "Wrapper";
@@ -205,69 +204,13 @@ public string WrapperClassFullname(Type type)
         return type.Namespace + "." + WrapperClassName( type);
 }
 
-
-public string PropertyTypeStrategy(MemberInfo info)
-{
-  var z=      info.MemberType == MemberTypes.Property;
-  // look in type list for translation
-  return "";//((PropertyInfo)info).PropertyType.FullName;
-}
-
-public MemberInfo[] ListPublicProperties(Type type)
-{
-    //var z = type.Na;
-	return type.GetMembers(BindingFlags.Public).Where(x => true).ToArray();
-}
-
-
-
 void WriteInterfaceMethodDeclaration(MethodInfo method)
 {
     // Write method visibility, return type and name
     Write("{0} {1}", GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
 
 	// Write generic
-	var genericParameters = method.GetParameters().Where(p => p.ParameterType.ContainsGenericParameters).Distinct().ToList();
-	if (method.ReturnType.ContainsGenericParameters)
-    {
-		genericParameters.Add( method.ReturnParameter);
-    }
-	if (method.IsGenericMethodDefinition)
-    {
-		Write("<");
-		for(int i = 0; i < genericParameters.Count(); i++)
-		{
-			//Write("/* " + string.Join(", ", genericParameters[i].ParameterType.IsGenericType.ToString())  + " */");
-			Write(genericParameters[i].ParameterType.Name.Replace("&",""));
-			if (i < (genericParameters.Count() - 1))
-				Write(", ");
-		}
-		Write(">");		
-    }
-
-	var genericArguments = method.GetGenericArguments();
-	var genericConstraints = new StringBuilder();
-	foreach(var arg in genericArguments)
-    {
-		var genericConstraintsList = new List<string>();
-
-		foreach(var cons in arg.GetGenericParameterConstraints())
-        {
-			genericConstraintsList.Add(GetCSharpTypeNameWithTranslation(cons));
-
-        }
-		if (arg.IsGenericParameter && (arg.GenericParameterAttributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0)
-        {
-			genericConstraintsList.Add("new()");
-        }
-		if (arg.IsGenericParameter && (arg.GenericParameterAttributes & GenericParameterAttributes.ReferenceTypeConstraint) != 0)
-        {
-			genericConstraintsList.Add("class");
-        }
-
-		genericConstraints.AppendFormat(" where {0}: {1}", arg.Name, string.Join(", ", genericConstraintsList));
-    }
-
+	Write(GenerateGenericArguments(method));
 
     // Write method parameters
     Write("(");
@@ -278,7 +221,7 @@ void WriteInterfaceMethodDeclaration(MethodInfo method)
             Write(", ");
     }
 	Write(")");
-	Write(genericConstraints.ToString());
+	Write(GenerateGenericConstraints(method));
     WriteLine(";");
 }
 
@@ -291,46 +234,7 @@ void WriteClassMethodDeclaration(MethodInfo method)
     Write("public {0} {1}", GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
 
 	// Write generic
-	var genericParameters = method.GetParameters().Where(p => p.ParameterType.ContainsGenericParameters).Distinct().ToList();
-	if (method.ReturnType.ContainsGenericParameters)
-    {
-		genericParameters.Add( method.ReturnParameter);
-    }
-	if (method.IsGenericMethodDefinition)
-    {
-		Write("<");
-		for(int i = 0; i < genericParameters.Count(); i++)
-		{
-			Write(genericParameters[i].ParameterType.Name.Replace("&",""));
-			if (i < (genericParameters.Count() - 1))
-				Write(", ");
-		}
-		Write(">");		
-    }
-
-	var genericArguments = method.GetGenericArguments();
-	var genericConstraints = new StringBuilder();
-	foreach(var arg in genericArguments)
-    {
-		var genericConstraintsList = new List<string>();
-
-		foreach(var cons in arg.GetGenericParameterConstraints())
-        {
-			genericConstraintsList.Add(GetCSharpTypeNameWithTranslation(cons));
-
-        }
-		if (arg.IsGenericParameter && (arg.GenericParameterAttributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0)
-        {
-			genericConstraintsList.Add("new()");
-        }
-		if (arg.IsGenericParameter && (arg.GenericParameterAttributes & GenericParameterAttributes.ReferenceTypeConstraint) != 0)
-        {
-			genericConstraintsList.Add("class");
-        }
-
-		genericConstraints.AppendFormat(" where {0}: {1}", arg.Name, string.Join(", ", genericConstraintsList));
-    }
-
+	Write(GenerateGenericArguments(method));
 
     // Write method parameters
     Write("(");
@@ -340,7 +244,7 @@ void WriteClassMethodDeclaration(MethodInfo method)
         if (i < (method.GetParameters().Length - 1))
             Write(", ");
     }
-    WriteLine(")" + genericConstraints.ToString());
+    WriteLine(")" + GenerateGenericConstraints(method));
     WriteLine("{");
     PushIndent("    ");
 		
@@ -363,29 +267,69 @@ void WriteClassMethodDeclaration(MethodInfo method)
     WriteLine("}");
 }
 
+string GenerateGenericArguments(MethodInfo method)
+{
+	var sb = new StringBuilder();
+	var genericParameters = method.GetParameters().Where(p => p.ParameterType.ContainsGenericParameters).Distinct().ToList();
+	if (method.ReturnType.ContainsGenericParameters)
+    {
+		genericParameters.Add( method.ReturnParameter);
+    }
+	if (method.IsGenericMethodDefinition)
+    {
+		sb.Append("<");
+		for(int i = 0; i < genericParameters.Count(); i++)
+		{
+			sb.Append(genericParameters[i].ParameterType.Name.Replace("&",""));
+			if (i < (genericParameters.Count() - 1))
+				sb.Append(", ");
+		}
+		sb.Append(">");		
+    }
+	return sb.ToString();
+}
+
 void WriteStaticClassMethodDeclaration(MethodInfo method, Type staticType)
 {
     // Write method visibility, return type and name
     Write("public {0} {1}", GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
 
 	// Write generic
-	var genericParameters = method.GetParameters().Where(p => p.ParameterType.ContainsGenericParameters).Distinct().ToList();
-	if (method.ReturnType.ContainsGenericParameters)
-    {
-		genericParameters.Add( method.ReturnParameter);
-    }
-	if (genericParameters.Count() > 0)
-    {
-		Write("<");
-		for(int i = 0; i < genericParameters.Count(); i++)
-		{
-			Write(genericParameters[i].ParameterType.Name.Replace("&",""));
-			if (i < (genericParameters.Count() - 1))
-				Write(", ");
-		}
-		Write(">");		
-    }
+	Write(GenerateGenericArguments(method));
 
+    // Write method parameters
+    Write("(");
+    for(int i = 0; i < method.GetParameters().Length; i++)
+    {
+        WriteParameterDeclaration(method.GetParameters()[i]);
+        if (i < (method.GetParameters().Length - 1))
+            Write(", ");
+    }
+    WriteLine(")" +  GenerateGenericConstraints(method));
+    WriteLine("{");
+    PushIndent("    ");
+
+	var parameters = string.Join(", ", method.GetParameters().Select(p => MapForwardedParameter(p)).ToArray());
+	var sb = new StringBuilder();
+	if (method.ReturnType != typeof(void))
+		sb.Append("return ");
+
+	if (SpecialTypeTranslation.Keys.Contains(method.ReturnType)) 
+		sb.AppendFormat(SpecialTypeTranslation[method.ReturnType].Item2, string.Format("{2}.{0}({1})", method.Name, parameters, staticType.FullName));
+	else if (NonAbstractClasses.Contains(method.ReturnType))
+		sb.AppendFormat("new {0} ({3}.{1}({2}))", WrapperClassFullname(method.ReturnType), method.Name, parameters, staticType.FullName, GenerateGenericArguments(method));
+	else
+		sb.AppendFormat("{2}.{0}{3}({1})", method.Name, parameters, staticType.FullName, GenerateGenericArguments(method));
+    sb.Append(";");
+
+	WriteLine(sb.ToString());
+
+	PopIndent();
+    WriteLine("}");
+}
+
+string GenerateGenericConstraints(MethodInfo method)
+{
 	var genericArguments = method.GetGenericArguments();
 	var genericConstraints = new StringBuilder();
 	foreach(var arg in genericArguments)
@@ -408,52 +352,8 @@ void WriteStaticClassMethodDeclaration(MethodInfo method, Type staticType)
 
 		genericConstraints.AppendFormat(" where {0}: {1}", arg.Name, string.Join(", ", genericConstraintsList));
     }
-
-    // Write method parameters
-    Write("(");
-    for(int i = 0; i < method.GetParameters().Length; i++)
-    {
-        WriteParameterDeclaration(method.GetParameters()[i]);
-        if (i < (method.GetParameters().Length - 1))
-            Write(", ");
-    }
-    WriteLine(")" + genericConstraints);
-    WriteLine("{");
-    PushIndent("    ");
-
-	var genericPart = new StringBuilder();
-	if (genericParameters.Count() > 0)
-    {
-		genericPart.Append("<");
-		for(int i = 0; i < genericParameters.Count(); i++)
-		{
-			genericPart.Append(genericParameters[i].ParameterType.Name.Replace("&",""));
-			if (i < (genericParameters.Count() - 1))
-				genericPart.Append(", ");
-		}
-		genericPart.Append(">");		
-    }
-
-
-	var parameters = string.Join(", ", method.GetParameters().Select(p => MapForwardedParameter(p)).ToArray());
-	var sb = new StringBuilder();
-	if (method.ReturnType != typeof(void))
-		sb.Append("return ");
-
-	if (SpecialTypeTranslation.Keys.Contains(method.ReturnType)) 
-		sb.AppendFormat(SpecialTypeTranslation[method.ReturnType].Item2, string.Format("{2}.{0}({1})", method.Name, parameters, staticType.FullName));
-	else if (NonAbstractClasses.Contains(method.ReturnType))
-		sb.AppendFormat("new {0} ({3}.{1}({2}))", WrapperClassFullname(method.ReturnType), method.Name, parameters, staticType.FullName, genericPart);
-	else
-		sb.AppendFormat("{2}.{0}{3}({1})", method.Name, parameters, staticType.FullName, genericPart);
-    sb.Append(";");
-
-	WriteLine(sb.ToString());
-
-	PopIndent();
-    WriteLine("}");
+	return genericConstraints.ToString();
 }
-
 
 string MapForwardedParameter(ParameterInfo p)
 {
@@ -565,9 +465,6 @@ void WriteStaticClassPropertyDeclaration(PropertyInfo property, Type staticType)
 	PopIndent();
     WriteLine("}");
 }
-
-
-
 	
 void WriteMethodCall(MethodInfo method)
 {
@@ -623,26 +520,6 @@ void WriteParameterCall(ParameterInfo parameter)
         Write("ref ");
 
     Write(parameter.Name);
-}
-
-string GetCSharpTypeName(Type type, string variableName)
-{
-	StringBuilder sb = new StringBuilder();
-//		if (type.FullName.StartsWith("Sitecore."))
-//			sb.Append("global::");
-
-	var csharpProvider = CodeDomProvider.CreateProvider("C#");
-	var typeReference = new CodeTypeReference(type);
-	var variableDeclaration = new CodeVariableDeclarationStatement(typeReference, variableName);
-	using (StringWriter writer = new StringWriter(sb))
-	{
-		csharpProvider.GenerateCodeFromStatement(variableDeclaration, writer, new CodeGeneratorOptions());
-	}
-	sb.Replace(";", null);
-	sb.Replace(Environment.NewLine , null);
-	var result = sb.ToString(); 
-
-	return result;
 }
 
 string GetCSharpTypeName(Type type)
