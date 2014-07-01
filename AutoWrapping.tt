@@ -1,8 +1,8 @@
 <#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ assembly name="System.Configuration" #>
-<#@ assembly name="$(SolutionDir)[replace with realtive path to Sitecore.Kernel.dll]" #>
-<#@ assembly name="$(SolutionDir)[replace with realtive path to Lucene.Net.dll]" #>
+<#@ assembly name="$(ProjectDir)\bin\$(ConfigurationName)\Sitecore.Kernel.dll" #>
+<#@ assembly name="$(ProjectDir)\bin\$(ConfigurationName)\Lucene.Net.dll" #>
 <#@ import namespace="Sitecore" #>
 <#@ import namespace="System.Reflection" #>
 <#@ import namespace="System.Text.RegularExpressions" #>
@@ -19,16 +19,15 @@
 //                                //
 //////////////////////////////////// 
 
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 
 namespace Sitecore.Abstraction
 {
-	public interface IAutoWrappedObject
+	public interface IAutoWrappedObject<T>
 	{
-		object InnerWrappedObject { get; set; }
+		T InnerWrappedObject{ get; }
 	}
 }
 
@@ -126,7 +125,7 @@ ClearIndent();
 
 namespace <#= type.Namespace #>
 {
-	public interface <#= InterfaceName(type) #> : Sitecore.Abstraction.IAutoWrappedObject
+	public interface <#= InterfaceName(type) #> : Sitecore.Abstraction.IAutoWrappedObject<<#=  GetCSharpTypeName(type) #>>
 	{
 		// Instance Properties
 <# foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)) { #>
@@ -144,18 +143,12 @@ namespace <#= type.Namespace #>
 
 	public class <#= WrapperClassName(type) #> : <#= InterfaceName(type) #>
 	{
-		private <#=  GetCSharpTypeName(type) #> _innerObject;
-
 		public <#= WrapperClassName(type) #>(<#=  GetCSharpTypeName(type) #> innerObject)
 		{
-			_innerObject = innerObject;
+			InnerWrappedObject = innerObject;
 		}
 
-		public object InnerWrappedObject
-		{
-			get { return _innerObject; }
-			set { _innerObject = (<#=  GetCSharpTypeName(type) #>)value; } 
-		}
+		public <#=  GetCSharpTypeName(type) #> InnerWrappedObject{ get; private set;}
 
 		// Instance Properties
 <# 
@@ -254,11 +247,11 @@ void WriteClassMethodDeclaration(MethodInfo method)
 		sb.Append("return ");
 
 	if (SpecialTypeTranslation.Keys.Contains(method.ReturnType)) 
-		sb.AppendFormat(SpecialTypeTranslation[method.ReturnType].Item2, string.Format("_innerObject.{0}({1})", method.Name, parameters));
+		sb.AppendFormat(SpecialTypeTranslation[method.ReturnType].Item2, string.Format("InnerWrappedObject.{0}({1})", method.Name, parameters));
 	else if (NonAbstractClasses.Contains(method.ReturnType))
-		sb.AppendFormat("new {0} (_innerObject.{1}({2}))", WrapperClassFullname(method.ReturnType), method.Name, parameters);
+		sb.AppendFormat("new {0} (InnerWrappedObject.{1}({2}))", WrapperClassFullname(method.ReturnType), method.Name, parameters);
 	else
-		sb.AppendFormat("_innerObject.{0}({1})", method.Name, parameters);
+		sb.AppendFormat("InnerWrappedObject.{0}({1})", method.Name, parameters);
     sb.Append(";");
 
 	WriteLine(sb.ToString());
@@ -384,7 +377,7 @@ void WriteClassPropertyDeclaration(PropertyInfo property, Type instanceType)
 	{
 		if (property.GetGetMethod() != null)
 		{
-			WriteLine(string.Format("get {{ return {0}; }}", string.Format(SpecialTypeTranslation[property.PropertyType].Item2, "_innerObject." + property.Name)));
+			WriteLine(string.Format("get {{ return {0}; }}", string.Format(SpecialTypeTranslation[property.PropertyType].Item2, "InnerWrappedObject." + property.Name)));
 		}
 		if (property.GetSetMethod() != null)
 		{
@@ -395,22 +388,22 @@ void WriteClassPropertyDeclaration(PropertyInfo property, Type instanceType)
 	{
 		if (property.GetGetMethod() != null)
 		{
-			WriteLine(string.Format("get {{ return new {0}(_innerObject.{1}); }}", WrapperClassFullname(property.PropertyType), property.Name));
+			WriteLine(string.Format("get {{ return new {0}(InnerWrappedObject.{1}); }}", WrapperClassFullname(property.PropertyType), property.Name));
 		}
 		if (property.GetSetMethod() != null)
 		{
-			WriteLine("set {{ _innerObject.{0} = (({1})value.InnerWrappedObject).{0}; }}", property.Name, instanceType);
+			WriteLine("set {{ InnerWrappedObject.{0} = InnerWrappedObject.{0}; }}", property.Name, instanceType);
 		}
 	}
 	else
 	{
 		if (property.GetGetMethod() != null)
 		{
-			WriteLine(string.Format("get {{ return _innerObject.{0}; }}", property.Name));
+			WriteLine(string.Format("get {{ return InnerWrappedObject.{0}; }}", property.Name));
 		}
 		if (property.GetSetMethod() != null)
 		{
-			WriteLine(string.Format("set {{ _innerObject.{0} = value; }}", property.Name));
+			WriteLine(string.Format("set {{ InnerWrappedObject.{0} = value; }}", property.Name));
 		}
 	}
 
