@@ -1,0 +1,20 @@
+﻿<#@ IntelliSenseLanguage processor="tangibleT4Editor" language="C#" #>
+<#+ 
+private void GenerateInterface(bool multipleFiles)
+{
+  #>
+namespace Sitecore.Abstraction
+{
+	public interface IAutoWrappedObject<T>
+	{
+		T InnerWrappedObject{ get; }
+	}
+}
+  <#+
+  	if(multipleFiles)
+    {
+		SaveOutput("IAutoWrappedObject.cs");
+    }
+  }
+
+#>

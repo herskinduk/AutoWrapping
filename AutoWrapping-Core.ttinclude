@@ -1,0 +1,491 @@
+﻿<#@ IntelliSenseLanguage processor="tangibleT4Editor" language="C#" #>
+<#+
+
+public Dictionary<Type, Tuple<string, string>> SpecialTypeTranslation { get; set; }
+public List<Type> NonAbstractClasses { get; set; }
+public List<Type> Statics { get; set; }
+
+protected string InterfaceName(Type type)
+{
+        return "I" + type.Name;
+}
+
+protected string InterfaceFullname(Type type)
+{
+        return type.Namespace + "." + InterfaceName( type);
+}
+
+protected string WrapperClassName(Type type)
+{
+        return type.Name + "Wrapper";
+}
+
+protected string WrapperClassFullname(Type type)
+{
+        return type.Namespace + "." + WrapperClassName( type);
+}
+
+protected void SaveOutput(string outputFileName)
+{
+    string templateDirectory = Path.GetDirectoryName(Host.TemplateFile);
+    string outputFilePath = Path.Combine(templateDirectory, outputFileName);
+    File.WriteAllText(outputFilePath, this.GenerationEnvironment.ToString()); 
+
+    this.GenerationEnvironment.Remove(0, this.GenerationEnvironment.Length);
+}
+
+protected void WriteInterfaceMethodDeclaration(MethodInfo method)
+{
+	if(method.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+
+    // Write method visibility, return type and name
+    Write("{0} {1}", GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
+
+	// Write generic
+	Write(GenerateGenericArguments(method));
+
+    // Write method parameters
+    Write("(");
+    for(int i = 0; i < method.GetParameters().Length; i++)
+    {
+        WriteParameterDeclaration(method.GetParameters()[i]);
+        if (i < (method.GetParameters().Length - 1))
+            Write(", ");
+    }
+	Write(")");
+	Write(GenerateGenericConstraints(method));
+    WriteLine(";");
+}
+
+
+
+
+protected void WriteClassMethodDeclaration(MethodInfo method)
+{
+	if(method.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+
+	string overrideText = IsVirtualMethod(method) ? "override ": string.Empty;
+    // Write method visibility, return type and name
+    Write("public {0}{1} {2}", overrideText, GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
+
+	// Write generic
+	Write(GenerateGenericArguments(method));
+
+    // Write method parameters
+    Write("(");
+    for(int i = 0; i < method.GetParameters().Length; i++)
+    {
+        WriteParameterDeclaration(method.GetParameters()[i]);
+        if (i < (method.GetParameters().Length - 1))
+            Write(", ");
+    }
+    WriteLine(")" + GenerateGenericConstraints(method));
+    WriteLine("{");
+    PushIndent("    ");
+		
+	var parameters = string.Join(", ", method.GetParameters().Select(p => MapForwardedParameter(p)).ToArray());
+	var sb = new StringBuilder();
+	if (method.ReturnType != typeof(void))
+		sb.Append("return ");
+
+	if (SpecialTypeTranslation.Keys.Contains(method.ReturnType)) 
+		sb.AppendFormat(SpecialTypeTranslation[method.ReturnType].Item2, string.Format("InnerWrappedObject.{0}({1})", method.Name, parameters));
+	else if (NonAbstractClasses.Contains(method.ReturnType))
+		sb.AppendFormat("new {0} (InnerWrappedObject.{1}({2}))", WrapperClassFullname(method.ReturnType), method.Name, parameters);
+	else
+		sb.AppendFormat("InnerWrappedObject.{0}({1})", method.Name, parameters);
+    sb.Append(";");
+
+	WriteLine(sb.ToString());
+
+	PopIndent();
+    WriteLine("}");
+	WriteLine(string.Empty);
+}
+
+protected string GenerateGenericArguments(MethodInfo method)
+{
+	var sb = new StringBuilder();
+	var genericParameters = method.GetParameters().Where(p => p.ParameterType.ContainsGenericParameters).Distinct().ToList();
+	if (method.ReturnType.ContainsGenericParameters)
+    {
+		genericParameters.Add( method.ReturnParameter);
+    }
+	if (method.IsGenericMethodDefinition)
+    {
+		sb.Append("<");
+		for(int i = 0; i < genericParameters.Count(); i++)
+		{
+			sb.Append(genericParameters[i].ParameterType.Name.Replace("&",""));
+			if (i < (genericParameters.Count() - 1))
+				sb.Append(", ");
+		}
+		sb.Append(">");		
+    }
+	return sb.ToString();
+}
+
+protected void WriteStaticClassMethodDeclaration(MethodInfo method, Type staticType)
+{
+	if(method.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+
+	string overrideText = IsVirtualMethod(method) ? "override ": string.Empty;
+    // Write method visibility, return type and name
+    Write("public {0}{1} {2}", overrideText, GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
+
+	// Write generic
+	Write(GenerateGenericArguments(method));
+
+    // Write method parameters
+    Write("(");
+    for(int i = 0; i < method.GetParameters().Length; i++)
+    {
+        WriteParameterDeclaration(method.GetParameters()[i]);
+        if (i < (method.GetParameters().Length - 1))
+            Write(", ");
+    }
+    WriteLine(")" +  GenerateGenericConstraints(method));
+    WriteLine("{");
+    PushIndent("    ");
+
+	var parameters = string.Join(", ", method.GetParameters().Select(p => MapForwardedParameter(p)).ToArray());
+	var sb = new StringBuilder();
+	if (method.ReturnType != typeof(void))
+		sb.Append("return ");
+
+	if (SpecialTypeTranslation.Keys.Contains(method.ReturnType)) 
+		sb.AppendFormat(SpecialTypeTranslation[method.ReturnType].Item2, string.Format("{2}.{0}({1})", method.Name, parameters, staticType.FullName));
+	else if (NonAbstractClasses.Contains(method.ReturnType))
+		sb.AppendFormat("new {0} ({3}.{1}({2}))", WrapperClassFullname(method.ReturnType), method.Name, parameters, staticType.FullName, GenerateGenericArguments(method));
+	else
+		sb.AppendFormat("{2}.{0}{3}({1})", method.Name, parameters, staticType.FullName, GenerateGenericArguments(method));
+    sb.Append(";");
+
+	WriteLine(sb.ToString());
+
+	PopIndent();
+    WriteLine("}");
+}
+
+protected string GenerateGenericConstraints(MethodInfo method)
+{
+	var genericArguments = method.GetGenericArguments();
+	var genericConstraints = new StringBuilder();
+	foreach(var arg in genericArguments)
+    {
+		var genericConstraintsList = new List<string>();
+
+		foreach(var cons in arg.GetGenericParameterConstraints())
+        {
+			genericConstraintsList.Add(GetCSharpTypeNameWithTranslation(cons));
+
+        }
+		if (arg.IsGenericParameter && (arg.GenericParameterAttributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0)
+        {
+			genericConstraintsList.Add("new()");
+        }
+		if (arg.IsGenericParameter && (arg.GenericParameterAttributes & GenericParameterAttributes.ReferenceTypeConstraint) != 0)
+        {
+			genericConstraintsList.Add("class");
+        }
+
+		genericConstraints.AppendFormat(" where {0}: {1}", arg.Name, string.Join(", ", genericConstraintsList));
+    }
+	return genericConstraints.ToString();
+}
+
+protected string MapForwardedParameter(ParameterInfo p)
+{
+	var parameterType = "";
+    if (p.IsOut)
+        parameterType = ("out ");
+    else if (p.ParameterType.IsByRef)
+        parameterType = ("ref ");
+
+
+	if (SpecialTypeTranslation.Keys.Contains(p.ParameterType))
+		return string.Format(SpecialTypeTranslation[p.ParameterType].Item2, p.Name);
+	else if (NonAbstractClasses.Contains(p.ParameterType))
+		return string.Format("{2}({0}){1}.InnerWrappedObject", GetCSharpTypeName(p.ParameterType), p.Name, parameterType);
+	else
+		return parameterType+p.Name;
+}
+
+protected void WriteClassPropertyDeclaration(PropertyInfo property, Type instanceType)
+{
+	if(property.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+
+    // Write method visibility, return type and name
+    WriteLine("public {0} {1}", GetCSharpTypeNameWithTranslation(property.PropertyType), property.Name);
+    WriteLine("{");
+    PushIndent("    ");
+		
+	var sb = new StringBuilder();
+	if (SpecialTypeTranslation.ContainsKey(property.PropertyType))
+	{
+		if (property.GetGetMethod() != null)
+		{
+			WriteLine(string.Format("get {{ return {0}; }}", string.Format(SpecialTypeTranslation[property.PropertyType].Item2, "InnerWrappedObject." + property.Name)));
+		}
+		if (property.GetSetMethod() != null)
+		{
+			WriteLine("set { /* TODO */; }");
+		}
+    }
+	else if (NonAbstractClasses.Contains(property.PropertyType))
+	{
+		if (property.GetGetMethod() != null)
+		{
+			WriteLine(string.Format("get {{ return new {0}(InnerWrappedObject.{1}); }}", WrapperClassFullname(property.PropertyType), property.Name));
+		}
+		if (property.GetSetMethod() != null)
+		{
+			WriteLine("set {{ InnerWrappedObject.{0} = InnerWrappedObject.{0}; }}", property.Name, instanceType);
+		}
+	}
+	else
+	{
+		if (property.GetGetMethod() != null)
+		{
+			WriteLine(string.Format("get {{ return InnerWrappedObject.{0}; }}", property.Name));
+		}
+		if (property.GetSetMethod() != null)
+		{
+			WriteLine(string.Format("set {{ InnerWrappedObject.{0} = value; }}", property.Name));
+		}
+	}
+
+
+	PopIndent();
+    WriteLine("}");
+	WriteLine(string.Empty);
+}
+
+protected void WriteInterfacePropertyDeclaration(PropertyInfo property, Type staticType)
+{
+	if(property.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+	Write(GetCSharpTypeNameWithTranslation(property.PropertyType));
+	Write(" ");
+	Write(property.Name);
+	Write("{"); 
+	Write(property.GetGetMethod() != null ? "get;" : string.Empty);
+	Write(property.GetSetMethod() != null ? "set;" : string.Empty);
+	WriteLine("}"); 
+}
+
+protected void WriteStaticClassPropertyDeclaration(PropertyInfo property, Type staticType)
+{
+	if(property.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+    // Write method visibility, return type and name
+    WriteLine("public {0} {1}", GetCSharpTypeNameWithTranslation(property.PropertyType), property.Name);
+    WriteLine("{");
+    PushIndent("    ");
+		
+	var sb = new StringBuilder();
+	if (SpecialTypeTranslation.ContainsKey(property.PropertyType))
+	{
+		if (property.GetGetMethod() != null)
+		{
+			WriteLine(string.Format("get {{ return {0}; }}", string.Format(SpecialTypeTranslation[property.PropertyType].Item2, staticType.FullName + "." + property.Name)));
+		}
+		if (property.GetSetMethod() != null)
+		{
+			WriteLine("set { throw NotImplementedException() /* TODO */; }");
+		}
+    }
+	else if (NonAbstractClasses.Contains(property.PropertyType))
+	{
+		if (property.GetGetMethod() != null)
+		{
+			WriteLine(string.Format("get {{ return new {0}({1}.{2}); }}", WrapperClassFullname(property.PropertyType), staticType.FullName, property.Name));
+		}
+		if (property.GetSetMethod() != null)
+		{
+			WriteLine("set {{ {1}.{0} = (({2})value.InnerWrappedObject); }}", property.Name, staticType.FullName, property.PropertyType.FullName);
+		}
+	}
+	else
+	{
+		if (property.GetGetMethod() != null)
+		{
+			WriteLine(string.Format("get {{ return {1}.{0}; }}", property.Name, staticType.FullName));
+		}
+		if (property.GetSetMethod() != null)
+		{
+			WriteLine(string.Format("set {{ {1}.{0} = value; }}", property.Name, staticType.FullName));
+		}
+	}
+
+
+	PopIndent();
+    WriteLine("}");
+	WriteLine(string.Empty);
+}
+	
+protected void WriteMethodCall(MethodInfo method)
+{
+    // Write method name
+    if (method.ReturnType != null)
+        Write("result = ");
+    Write("_component.{0}", method.Name);
+
+    // Write method parameters
+    Write("(");
+    for(int i = 0; i < method.GetParameters().Length; i++)
+    {
+        WriteParameterCall(method.GetParameters()[i]);
+        if (i < (method.GetParameters().Length - 1))
+            Write(", ");
+    }
+    WriteLine(");");
+}
+
+protected void WriteMethodFooter(MethodInfo method)
+{
+    // Write return statement
+    if (method.ReturnType != null)
+        WriteLine("return result;");
+
+    PopIndent();        
+    WriteLine("}");
+}
+
+protected void WriteParameterDeclaration(ParameterInfo parameter)
+{
+	string parameterTypeFullName = GetCSharpTypeNameWithTranslation(parameter.ParameterType);
+	var referenceType = parameter.ParameterType;
+    if (parameter.ParameterType != null)
+    {
+        if (parameter.IsOut)
+            Write("out ");
+        else if (parameter.ParameterType.IsByRef)
+            Write("ref ");
+    }
+
+	if (parameter.ParameterType.ContainsGenericParameters)
+		Write(parameter.ParameterType.Name.Replace("&","") + " " + parameter.Name);
+	else
+		Write(parameterTypeFullName + " " + parameter.Name);
+}
+
+protected void WriteParameterCall(ParameterInfo parameter)
+{
+    if (parameter.IsOut)
+        Write("out ");
+    else if (parameter.ParameterType.IsByRef)
+        Write("ref ");
+
+    Write(parameter.Name);
+}
+
+protected string GetCSharpTypeName(Type type)
+{
+	var csharpProvider = CodeDomProvider.CreateProvider("C#");
+	var typeReference = new CodeTypeReference(type);
+	var variableDeclaration = new CodeVariableDeclarationStatement(typeReference, "dummy");
+	StringBuilder sb = new StringBuilder();
+	using (StringWriter writer = new StringWriter(sb))
+	{
+		csharpProvider.GenerateCodeFromStatement(variableDeclaration, writer, new CodeGeneratorOptions());
+	}
+	sb.Replace(Environment.NewLine , null);
+	sb.Replace(" dummy;", null);
+
+	return sb.ToString(); 
+}
+
+protected string GetCSharpTypeNameWithTranslation(Type type)
+{
+	var pattern = @"(?<![\.\w])(?<type>{0})(?![\.\w])";
+	var csharpTypeName = GetCSharpTypeName(type);
+			
+	foreach (var traslateType in SpecialTypeTranslation.Keys)
+    {
+		var translateFrom = Regex.Escape(GetCSharpTypeName(traslateType));
+		var translateTo = SpecialTypeTranslation[traslateType].Item1;
+		csharpTypeName = Regex.Replace(csharpTypeName, string.Format(pattern, translateFrom), translateTo); 
+    }
+			
+	if (!SpecialTypeTranslation.ContainsKey(type))
+    {
+		foreach (var traslateType in NonAbstractClasses)
+		{
+			var translateFrom = Regex.Escape(GetCSharpTypeName(traslateType));
+			var translateTo = InterfaceFullname(traslateType);
+			csharpTypeName = Regex.Replace(csharpTypeName, string.Format(pattern, translateFrom), translateTo); 
+		}
+    }
+
+	return csharpTypeName; 
+}
+
+protected string CodeDomToString(CodeStatement codeObject)
+{
+	var csharpProvider = CodeDomProvider.CreateProvider("C#");
+	StringBuilder sb = new StringBuilder();
+	using (StringWriter writer = new StringWriter(sb))
+	{
+		csharpProvider.GenerateCodeFromStatement(codeObject, writer, new CodeGeneratorOptions());
+	}
+	return sb.ToString(); 
+}
+
+protected CodeMemberProperty GenerateProperty(CodeTypeDeclaration root, string name, CodeTypeReference typeReference)
+{
+		CodeMemberProperty codeMemberProperty = new CodeMemberProperty();
+		codeMemberProperty.Attributes = MemberAttributes.Final | MemberAttributes.FamilyAndAssembly | MemberAttributes.FamilyOrAssembly;
+		codeMemberProperty.HasGet = true;
+		codeMemberProperty.HasSet = true;
+		codeMemberProperty.Name = name;
+		codeMemberProperty.Type = typeReference;
+		root.Members.Add(codeMemberProperty);
+		return codeMemberProperty;
+}
+
+protected void GenerateGlobalUsingStatements()
+{
+	WriteLine("/// ## AUTO GENERATED DO NOT ALTER ## ///");
+	WriteLine("using System.Collections.Generic;");
+	WriteLine("using System.Linq;");
+	WriteLine(string.Empty);
+}
+
+private bool IsVirtualMethod(MethodInfo method)
+{
+	// todo: nm - find a better way of doing this
+	if(method.Name.Equals("ToString", StringComparison.OrdinalIgnoreCase))
+	{
+		return true;
+    }
+	if(method.Name.Equals("GetHashCode", StringComparison.OrdinalIgnoreCase))
+	{
+		return true;
+    }
+
+	if(method.Name.Equals("GetHashCode", StringComparison.OrdinalIgnoreCase))
+	{
+		return true;
+    }
+
+	return false;
+}
+
+#>
