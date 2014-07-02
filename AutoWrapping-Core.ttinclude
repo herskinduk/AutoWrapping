@@ -36,6 +36,11 @@ protected void SaveOutput(string outputFileName)
 
 protected void WriteInterfaceMethodDeclaration(MethodInfo method)
 {
+	if(method.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+
     // Write method visibility, return type and name
     Write("{0} {1}", GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
 
@@ -60,8 +65,14 @@ protected void WriteInterfaceMethodDeclaration(MethodInfo method)
 
 protected void WriteClassMethodDeclaration(MethodInfo method)
 {
+	if(method.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+
+	string overrideText = IsVirtualMethod(method) ? "override ": string.Empty;
     // Write method visibility, return type and name
-    Write("public {0} {1}", GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
+    Write("public {0}{1} {2}", overrideText, GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
 
 	// Write generic
 	Write(GenerateGenericArguments(method));
@@ -95,6 +106,7 @@ protected void WriteClassMethodDeclaration(MethodInfo method)
 
 	PopIndent();
     WriteLine("}");
+	WriteLine(string.Empty);
 }
 
 protected string GenerateGenericArguments(MethodInfo method)
@@ -121,8 +133,14 @@ protected string GenerateGenericArguments(MethodInfo method)
 
 protected void WriteStaticClassMethodDeclaration(MethodInfo method, Type staticType)
 {
+	if(method.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+
+	string overrideText = IsVirtualMethod(method) ? "override ": string.Empty;
     // Write method visibility, return type and name
-    Write("public {0} {1}", GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
+    Write("public {0}{1} {2}", overrideText, GetCSharpTypeNameWithTranslation(method.ReturnType), method.Name);
 
 	// Write generic
 	Write(GenerateGenericArguments(method));
@@ -204,6 +222,11 @@ protected string MapForwardedParameter(ParameterInfo p)
 
 protected void WriteClassPropertyDeclaration(PropertyInfo property, Type instanceType)
 {
+	if(property.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+
     // Write method visibility, return type and name
     WriteLine("public {0} {1}", GetCSharpTypeNameWithTranslation(property.PropertyType), property.Name);
     WriteLine("{");
@@ -250,8 +273,27 @@ protected void WriteClassPropertyDeclaration(PropertyInfo property, Type instanc
 	WriteLine(string.Empty);
 }
 
+protected void WriteInterfacePropertyDeclaration(PropertyInfo property, Type staticType)
+{
+	if(property.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
+	Write(GetCSharpTypeNameWithTranslation(property.PropertyType));
+	Write(" ");
+	Write(property.Name);
+	Write("{"); 
+	Write(property.GetGetMethod() != null ? "get;" : string.Empty);
+	Write(property.GetSetMethod() != null ? "set;" : string.Empty);
+	WriteLine("}"); 
+}
+
 protected void WriteStaticClassPropertyDeclaration(PropertyInfo property, Type staticType)
 {
+	if(property.GetCustomAttribute<ObsoleteAttribute>() != null)
+	{
+		return;
+	}
     // Write method visibility, return type and name
     WriteLine("public {0} {1}", GetCSharpTypeNameWithTranslation(property.PropertyType), property.Name);
     WriteLine("{");
@@ -425,4 +467,25 @@ protected void GenerateGlobalUsingStatements()
 	WriteLine("using System.Linq;");
 	WriteLine(string.Empty);
 }
+
+private bool IsVirtualMethod(MethodInfo method)
+{
+	// todo: nm - find a better way of doing this
+	if(method.Name.Equals("ToString", StringComparison.OrdinalIgnoreCase))
+	{
+		return true;
+    }
+	if(method.Name.Equals("GetHashCode", StringComparison.OrdinalIgnoreCase))
+	{
+		return true;
+    }
+
+	if(method.Name.Equals("GetHashCode", StringComparison.OrdinalIgnoreCase))
+	{
+		return true;
+    }
+
+	return false;
+}
+
 #>

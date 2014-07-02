@@ -12,9 +12,9 @@ namespace <#= type.Namespace #>
 	public interface <#= InterfaceName(type) #>
 	{
 		// Static Properties
-		<#+ foreach (var property in type.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly)) { #>
-				<#= GetCSharpTypeNameWithTranslation(property.PropertyType) #> <#= property.Name #> { <#= property.GetGetMethod() != null ? "get;" : "" #> <#= property.GetSetMethod() != null ? "set;" : "" #>  }
-		<#+ } #>
+		<#+ foreach (var property in type.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly)) { 
+			WriteInterfacePropertyDeclaration(property, type);
+		} #>
 
 		// Static Methods
 		<#+ foreach (MethodInfo method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(m => !m.IsSpecialName)) 
