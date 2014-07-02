@@ -16,9 +16,9 @@
 <#@ include file="AutoWrapping-Static.ttinclude" #>
 <#@ include file="AutoWrapping-NonStatic.ttinclude" #>
 <#@ include file="AutoWrapping-Interfaces.ttinclude" #>
-<#@ output extension=".cs" #>
+<#@ output extension="/" #>
 <#
-	bool multipleFiles = false;
+	bool multipleFiles = true;
 	GenerateInterface(multipleFiles);
 
 	Statics = new List<Type>()

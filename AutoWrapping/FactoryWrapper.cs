@@ -69,10 +69,6 @@ namespace Sitecore.Configuration
         {
             return Sitecore.Configuration.Factory.GetIDTable();
         }
-        public Sitecore.Data.Indexing.Index GetIndex(string name)
-        {
-            return Sitecore.Configuration.Factory.GetIndex(name);
-        }
         public System.Collections.Generic.IComparer<Sitecore.Data.Items.Item> GetItemComparer(Sitecore.Data.Items.IItem item)
         {
             return Sitecore.Configuration.Factory.GetItemComparer((Sitecore.Data.Items.Item)item.InnerWrappedObject);
@@ -116,14 +112,6 @@ namespace Sitecore.Configuration
         public string[] GetSiteNames()
         {
             return Sitecore.Configuration.Factory.GetSiteNames();
-        }
-        public System.Collections.Generic.List<Sitecore.Sites.SiteContext> GetSites()
-        {
-            return Sitecore.Configuration.Factory.GetSites();
-        }
-        public System.Collections.Generic.List<Sitecore.Web.SiteInfo> GetSitesInfo()
-        {
-            return Sitecore.Configuration.Factory.GetSitesInfo();
         }
         public string GetString(string configPath, bool assert)
         {

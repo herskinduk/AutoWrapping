@@ -7,10 +7,10 @@ namespace Sitecore.Diagnostics
 	public interface ILog
 	{
 		// Static Properties
-						bool Enabled { get;   }
-						bool IsDebugEnabled { get;   }
-						Sitecore.Caching.Cache Singles { get;   }
-		
+		bool Enabled{get;}
+bool IsDebugEnabled{get;}
+Sitecore.Caching.Cache Singles{get;}
+
 		// Static Methods
 		void Audit(string message, object owner);
         void Audit(string message, System.Type ownerType);

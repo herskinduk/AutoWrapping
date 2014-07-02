@@ -76,11 +76,6 @@ namespace Sitecore.Configuration
             get { return Sitecore.Configuration.Settings.DataFolder; }
         }
 
-        public System.TimeSpan DataProviderTimeout
-        {
-            get { return Sitecore.Configuration.Settings.DataProviderTimeout; }
-        }
-
         public string DebugBorderColor
         {
             get { return Sitecore.Configuration.Settings.DebugBorderColor; }

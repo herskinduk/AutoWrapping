@@ -77,15 +77,15 @@
     <Compile Include="UnitTest\InterfaceTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="AutoWrapping-Single.tt">
+    <None Include="AutoWrapping.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>AutoWrapping-Single.cs</LastGenOutput>
+      <LastGenOutput>AutoWrapping.cs</LastGenOutput>
     </None>
     <None Include="AutoWrapping-Core.ttinclude" />
     <None Include="AutoWrapping-Interfaces.ttinclude" />
     <None Include="AutoWrapping-NonStatic.ttinclude" />
     <None Include="AutoWrapping-Static.ttinclude" />
-    <None Include="AutoWrapping.tt">
+    <None Include="AutoWrapping-Multiple.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
     </None>
     <None Include="packages.config" />

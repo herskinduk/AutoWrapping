@@ -15,49 +15,56 @@ namespace Sitecore.Data
 
 		// Instance Properties
 		public System.Guid Guid
-        {
-            get { return InnerWrappedObject.Guid; }
-        }
+{
+    get { return InnerWrappedObject.Guid; }
+}
 
-        public bool IsGlobalNullId
-        {
-            get { return InnerWrappedObject.IsGlobalNullId; }
-        }
+public bool IsGlobalNullId
+{
+    get { return InnerWrappedObject.IsGlobalNullId; }
+}
 
-        public bool IsNull
-        {
-            get { return InnerWrappedObject.IsNull; }
-        }
+public bool IsNull
+{
+    get { return InnerWrappedObject.IsNull; }
+}
 
-        
-        		// Instance Methods
-        		public void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
-        {
-            InnerWrappedObject.GetObjectData(info, context);
-        }
-        public long GetDataLength()
-        {
-            return InnerWrappedObject.GetDataLength();
-        }
-        public bool Equals(object obj)
-        {
-            return InnerWrappedObject.Equals(obj);
-        }
-        public int GetHashCode()
-        {
-            return InnerWrappedObject.GetHashCode();
-        }
-        public System.Guid ToGuid()
-        {
-            return InnerWrappedObject.ToGuid();
-        }
-        public Sitecore.Data.ShortID ToShortID()
-        {
-            return InnerWrappedObject.ToShortID();
-        }
-        public string ToString()
-        {
-            return InnerWrappedObject.ToString();
-        }
+
+		// Instance Methods
+		public void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
+{
+    InnerWrappedObject.GetObjectData(info, context);
+}
+
+public long GetDataLength()
+{
+    return InnerWrappedObject.GetDataLength();
+}
+
+public override bool Equals(object obj)
+{
+    return InnerWrappedObject.Equals(obj);
+}
+
+public override int GetHashCode()
+{
+    return InnerWrappedObject.GetHashCode();
+}
+
+public System.Guid ToGuid()
+{
+    return InnerWrappedObject.ToGuid();
+}
+
+public Sitecore.Data.ShortID ToShortID()
+{
+    return InnerWrappedObject.ToShortID();
+}
+
+public override string ToString()
+{
+    return InnerWrappedObject.ToString();
+}
+
 	}
 }

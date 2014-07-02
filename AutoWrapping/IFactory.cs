@@ -23,7 +23,6 @@ namespace Sitecore.Configuration
         string[] GetDomainNames();
         System.Collections.Hashtable GetHashtable(string path, Sitecore.Configuration.Factory.HashKeyType keyType, Sitecore.Configuration.Factory.HashValueType valueType, Sitecore.Configuration.Factory.HashValueFormat format, System.Type dataType);
         Sitecore.Data.IDTables.IDTableProvider GetIDTable();
-        Sitecore.Data.Indexing.Index GetIndex(string name);
         System.Collections.Generic.IComparer<Sitecore.Data.Items.Item> GetItemComparer(Sitecore.Data.Items.IItem item);
         Sitecore.Links.LinkDatabase GetLinkDatabase();
         Sitecore.Data.MasterVariablesReplacer GetMasterVariablesReplacer();
@@ -35,8 +34,6 @@ namespace Sitecore.Configuration
         Sitecore.Web.SiteInfo GetSiteInfo(string siteName);
         System.Collections.Generic.List<Sitecore.Web.SiteInfo> GetSiteInfoList();
         string[] GetSiteNames();
-        System.Collections.Generic.List<Sitecore.Sites.SiteContext> GetSites();
-        System.Collections.Generic.List<Sitecore.Web.SiteInfo> GetSitesInfo();
         string GetString(string configPath, bool assert);
         Sitecore.Collections.Set<string> GetStringSet(string configPath);
         Sitecore.Tasks.TaskDatabase GetArchiveTaskDatabase();

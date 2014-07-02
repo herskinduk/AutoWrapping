@@ -7,24 +7,22 @@
 		GenerateGlobalUsingStatements();
 	}
   #>
-	namespace <#= type.Namespace #>
+namespace <#= type.Namespace #>
+{
+	public interface <#= InterfaceName(type) #> : Sitecore.Abstraction.IAutoWrappedObject<<#=  GetCSharpTypeName(type) #>>
 	{
-		public interface <#= InterfaceName(type) #> : Sitecore.Abstraction.IAutoWrappedObject<<#=  GetCSharpTypeName(type) #>>
-		{
-			// Instance Properties
-			<#+ foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)) { #>
-					<#= GetCSharpTypeNameWithTranslation(property.PropertyType) #> <#= property.Name #> { <#= property.GetGetMethod() != null ? "get;" : "" #> <#= property.GetSetMethod() != null ? "set;" : "" #>  }
-			<#+ } #>
+		<#+ foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)) { 
+			WriteInterfacePropertyDeclaration(property, type);
+		} #>
 
-					// Instance Methods
-			<#+ foreach (MethodInfo method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(m => !m.IsSpecialName)) 
-			{ 
-				PushIndent("        ");
-				WriteInterfaceMethodDeclaration(method);
-				ClearIndent();
-			} #>
-		}
+		// Instance Methods
+		<#+ foreach (MethodInfo method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(m => !m.IsSpecialName)) 
+		{ 
+			WriteInterfaceMethodDeclaration(method);
+			ClearIndent();
+		} #>
 	}
+}
 <#+
 	if(multipleFiles)
     {
@@ -52,7 +50,6 @@ namespace <#= type.Namespace #>
 
 		// Instance Properties
 		<#+ 
-		PushIndent("        ");
 		foreach (var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)) 
 		{
 			WriteClassPropertyDeclaration(property, type);
