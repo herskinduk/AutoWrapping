@@ -1,0 +1,78 @@
+﻿<#@ IntelliSenseLanguage processor="tangibleT4Editor" language="C#" #>
+<#+ 
+  private void GenerateStaticClassInterface(Type type, bool multipleFiles)
+  {
+  	if(multipleFiles)
+    {
+		GenerateGlobalUsingStatements();
+    }
+  #>
+namespace <#= type.Namespace #>
+{
+	public interface <#= InterfaceName(type) #>
+	{
+		// Static Properties
+		<#+ foreach (var property in type.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly)) { #>
+				<#= GetCSharpTypeNameWithTranslation(property.PropertyType) #> <#= property.Name #> { <#= property.GetGetMethod() != null ? "get;" : "" #> <#= property.GetSetMethod() != null ? "set;" : "" #>  }
+		<#+ } #>
+
+		// Static Methods
+		<#+ foreach (MethodInfo method in type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(m => !m.IsSpecialName)) 
+		{ 
+			PushIndent("        ");
+			WriteInterfaceMethodDeclaration(method);
+			ClearIndent();
+		} #>
+			
+	}
+}
+<#+
+	if(multipleFiles)
+    {
+		SaveOutput(InterfaceName(type) + ".cs");
+    }
+  }
+
+  private void GenerateStaticClassWrapper(Type type, bool multipleFiles)
+  {
+  	if(multipleFiles)
+    {
+		GenerateGlobalUsingStatements();
+    }
+#>
+namespace <#= type.Namespace #>
+{
+	public class <#= WrapperClassName(type) #> : <#= InterfaceName(type) #>
+	{
+		public <#= WrapperClassName(type) #>()
+		{
+		}
+
+		// Static Properties
+		<#+ 
+		PushIndent("        ");
+		foreach (var property in type.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly)) 
+		{
+			WriteStaticClassPropertyDeclaration(property, type);
+		} 
+		ClearIndent();
+		#>
+
+				// Static Methods
+		<#+ 
+		PushIndent("        ");
+		foreach (MethodInfo method in type.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly).Where(m => !m.IsSpecialName)) 
+		{ 
+			WriteStaticClassMethodDeclaration(method, type);
+		} 
+		ClearIndent();
+		#>
+	}
+}
+<#+
+	if(multipleFiles)
+    {
+		SaveOutput(WrapperClassName(type) + ".cs");
+    }
+  }
+#>
