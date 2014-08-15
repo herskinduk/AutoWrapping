@@ -3,6 +3,7 @@
 <#@ assembly name="System.Configuration" #>
 <#@ assembly name="$(ProjectDir)\bin\$(ConfigurationName)\Sitecore.Kernel.dll" #>
 <#@ assembly name="$(ProjectDir)\bin\$(ConfigurationName)\Lucene.Net.dll" #>
+<#@ assembly name="$(ProjectDir)\bin\$(ConfigurationName)\Sitecore.Mvc.dll" #>
 <#@ import namespace="Sitecore" #>
 <#@ import namespace="System.Reflection" #>
 <#@ import namespace="System.Text.RegularExpressions" #>
@@ -45,7 +46,8 @@ namespace Sitecore.Abstraction
 		typeof(Sitecore.Data.Items.Item), 
 		typeof(Sitecore.Data.Database),
 		typeof(Sitecore.Data.Fields.Field),
-		typeof(Sitecore.Data.ID)
+		typeof(Sitecore.Data.ID),
+		typeof(Sitecore.Mvc.Presentation.Rendering)
     };
 
 	SpecialTypeTranslation = new Dictionary<Type, Tuple<string, string>>()
