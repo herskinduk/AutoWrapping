@@ -76,14 +76,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ICodeGenerator.cs" />
-    <Compile Include="ICodeGeneratorStrategy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoslynCodeGenerator.cs" />
-    <Compile Include="RoslynTypeExplorer.cs" />
-    <Compile Include="SimpleCodeGenerator.cs" />
+    <Compile Include="RoslynTypeRewriter.cs" />
     <Compile Include="TypeTranslationInfo.cs" />
-    <Compile Include="WrapperClassCodeDomStrategy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

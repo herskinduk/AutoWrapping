@@ -10,7 +10,14 @@ namespace AutoWrapping.Tests
 {
     public class RoslynCodeGeneratorTests
     {
-        public RoslynCodeGenerator SutFactory()
+        private readonly RoslynCodeGenerator _sut;
+
+        public RoslynCodeGeneratorTests()
+        {
+            _sut = CreateRoslynCodeGenerator();
+        }
+
+        public RoslynCodeGenerator CreateRoslynCodeGenerator()
         {
             return new RoslynCodeGenerator(
                 new List<TypeTranslationInfo> { 
@@ -23,151 +30,210 @@ namespace AutoWrapping.Tests
         [Fact]
         public void GenerateInterfaceForStaticMembers_WithAnyClass_ReturnsStringWithInterfaceDeclaration()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(String));
 
-            var result = sut.GenerateInterfaceForStaticMembers(typeof(String));
-
-            Assert.True(result.Contains("interface "));
+            Assert.Contains("interface ", result);
         }
 
         [Fact]
         public void GenerateInterfaceForStaticMembers_WithAnyClass_InterfaceNameIsCapitalIFollowedByClassName()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(String));
 
-            var result = sut.GenerateInterfaceForStaticMembers(typeof(String));
-
-            Assert.True(result.Contains("interface IString"));
+            Assert.Contains("interface IString", result);
         }
 
         [Fact]
         public void GenerateInterfaceForStaticMembers_WithAnyClass_InterfaceDeclaredPublic()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(String));
 
-            var result = sut.GenerateInterfaceForStaticMembers(typeof(String));
-
-            Assert.True(result.StartsWith("public interface IString"));
+            Assert.StartsWith("public interface IString", result);
         }
 
         [Fact]
         public void GenerateInterfaceForStaticMembers_WithClassHavingStaticMethods_AddsMethodsToSyntaxTree()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(StaticClassWithMethods));
 
-            var result = sut.GenerateInterfaceForStaticMembers(typeof(StaticClassWithMethods));
-
-            Assert.True(result.Contains("String MethodB(String input);"));
+            Assert.Contains("string MethodB(string input);", result);
         }
 
         [Fact]
         public void GenerateInterfaceForStaticMembers_WithClassHavingStaticMethodAndGenericParameter_AddsMethodsToSyntaxTree()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(ClassWithStaticGenericMethod));
 
-            var result = sut.GenerateInterfaceForStaticMembers(typeof(ClassWithStaticGenericMethod));
-
-            Assert.True(result.Contains("T Method(T input);"));
+            Assert.Contains("T Method<T>(T input);", result);
         }
 
         [Fact]
         public void GenerateInterfaceForStaticMembers_WithClassHavingStaticMethodWithGenericParameter_TransfersGenericContraint()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(ClassWithStaticGenericMethodAndGenericConstraints));
 
-            var result = sut.GenerateInterfaceForStaticMembers(typeof(ClassWithStaticGenericMethodAndGenericConstraints));
-
-            Assert.True(result.Contains(" where T : class, ICloneable"));
+            Assert.Contains(" where T : class, global::System.ICloneable", result);
         }
 
         [Fact]
         public void GenerateInterfaceForStaticMembers_WithClassHavingStaticProperty_MustAddPropertyToInterface()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(ClassWithStaticProperty));
 
-            var result = sut.GenerateInterfaceForStaticMembers(typeof(ClassWithStaticProperty));
-
-            Assert.True(result.Contains("String Property { get; set; }"));
+            Assert.Contains("string Property { get; set; }", result);
         }
 
         [Fact]
         public void GenerateInterfaceForInstanceMembers_WithClassHavingStaticProperty_MustNotAddPropertyToInterface()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithStaticProperty));
 
-            var result = sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithStaticProperty));
-
-            Assert.False(result.Contains("String Property { get; set; }"));
+            Assert.DoesNotContain("String Property { get; set; }", result);
         }
 
         [Fact]
         public void GenerateInterfaceForInstanceMembers_WithClassHavingInstanceProperty_MustAddPropertyToInterface()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceProperty));
 
-            var result = sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceProperty));
-
-            Assert.True(result.Contains("String Property { get; set; }"));
+            Assert.Contains("string Property { get; set; }", result);
         }
 
         [Fact]
         public void GenerateInterfaces_WithClassHavingPropertyOfSpecialType_MustTranslatePropertyType()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstancePropertyOfSpecialType));
 
-            var result = sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstancePropertyOfSpecialType));
-
-            Assert.True(result.Contains("TranslatedSpecialType Property { get; set; }"));
+            Assert.Contains("TranslatedSpecialType Property { get; set; }", result);
         }
 
         [Fact]
         public void GenerateInterfaces_WithClassHavingMethodReturningSpecialType_MustTranslateReturnType()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceMethodReturningSpecialType));
 
-            var result = sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceMethodReturningSpecialType));
-
-            Assert.True(result.Contains("TranslatedSpecialType Method();"));
+            Assert.Contains("TranslatedSpecialType Method();", result);
         }
 
         [Fact]
         public void GenerateInterfaces_WithClassHavingMethodAcceptingParameterOfSpecialType_MustTranslateParameterType()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfSpecialType));
 
-            var result = sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfSpecialType));
-
-            Assert.True(result.Contains("Void Method(TranslatedSpecialType input);"));
+            Assert.Contains("void Method(TranslatedSpecialType input);", result);
         }
-
-        //[Fact]
-        //public void GenerateInterfaces_WithClassHavingMethodAcceptingParameterOfSpecialType_MustTranslateParameterType()
-        //{
-        //    var sut = SutFactory();
-
-        //    var result = sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfSpecialType));
-
-        //    Assert.True(result.Contains("Void Method(TranslatedSpecialType input);"));
-        //}
-
-        //[Fact]
-        //public void GenerateInterfaces_WithClassHavingMethodAcceptingParameterOfSpecialType_MustTranslateParameterType()
-        //{
-        //    var sut = SutFactory();
-
-        //    var result = sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfSpecialType));
-
-        //    Assert.True(result.Contains("Void Method(TranslatedSpecialType input);"));
-        //}
 
         [Fact]
         public void GenerateInterfaces_WithClassHavingMethodAcceptingParameterOfGenericSpecialType_MustTranslateGenericType()
         {
-            var sut = SutFactory();
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfGenericSpecialType));
 
-            var result = sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfGenericSpecialType));
+            Assert.Contains("void Method(global::System.Collections.Generic.List<TranslatedSpecialType> input);", result);
+        }
 
-            Assert.True(result.Contains("Void Method(List<TranslatedSpecialType> input);"));
+        [Fact]
+        public void GenerateClassForStaticMembers_WithAnyClass_DeclaresPublicClass()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(String));
+
+            Assert.Contains("public class ", result);
+        }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithAnyClass_ClassNameIsClassNameFollowedByWrapper()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(String));
+
+            Assert.Contains("class StringWrapper", result);
+        }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithClassHavingStaticMethods_AddsMethodDeclaration()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(StaticClassWithMethods));
+
+            Assert.Contains("string MethodB(string input)", result);
+        }
+
+        [Fact]
+        public void GenerateClassForInstanceMembers_WithClassHavingInstanceMethods_AddsMethodDeclaration()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethod));
+
+            Assert.Contains("public void Method(string input)", result);
+        }
+
+        [Fact]
+        public void GenerateClassForInstanceMembers_WithClassHavingInstanceMethods_MethodBodyInvokesMethodOnInnerWrappedObject()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethod));
+
+            Assert.Contains("return _innerWrappedObject.Method(input);", result);
+        }
+
+
+        [Fact]
+        public void GenerateClassForInstanceMembers_WithClassHavingInstanceProperty_PropertyGetterForwardsToPropertyOnInnerWrappedObject()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceProperty));
+
+            Assert.Matches("public string Property\\s+{\\s+get\\s+{\\s+return _innerWrappedObject.Property;", result);
+        }
+
+        [Fact]
+        public void GenerateClassForInstanceMembers_WithClassHavingInstanceMethods_AddsMethodDeclarationWithTranslatedType()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfSpecialType));
+
+            Assert.Contains("public void Method(TranslatedSpecialType input)", result);
+        }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithClassHavingStaticMethods_MethodDeclarationIsNotStatic()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(StaticClassWithMethods));
+
+            Assert.DoesNotContain("static string MethodB", result);
+        }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithClassHavingStaticMethods_MethodBodyCallsStaticOnOriginType()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(StaticClassWithMethods));
+
+            Assert.Contains("return global::AutoWrapping.Tests.StaticClassWithMethods.MethodB(input);", result);
+        }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithClassHavingStaticMethodHavingGenericConstraints_MethodCallsHasSameConstraints()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(ClassWithStaticGenericMethodAndGenericConstraints));
+
+            Assert.Contains("return global::AutoWrapping.Tests.ClassWithStaticGenericMethodAndGenericConstraints.Method<T>(input);", result);
+        }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithClassHavingStaticProperty_MustAddPropertyToWrapperClass()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(ClassWithStaticProperty));
+
+            Assert.Matches("public string Property\\s+{\\s+get\\s+{\\s+return global::AutoWrapping.Tests.ClassWithStaticProperty.Property;", result);
+        }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithClassHavingStaticProperty_MustAddProperty()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(ClassWithStaticProperty));
+
+            Assert.Contains("public string Property", result);
+        }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithClassHavingStaticProperty_MustNotAddGetAndSetMethods()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(ClassWithStaticProperty));
+
+            Assert.DoesNotContain("get_Property", result);
         }
     }
 
@@ -198,6 +264,11 @@ namespace AutoWrapping.Tests
     public class ClassWithInstanceProperty
     {
         public string Property { get; set; }
+    }
+
+    public class ClassWithInstanceMethod
+    {
+        public void Method(string input) { throw new NotImplementedException(); }
     }
 
     public class ClassWithInstancePropertyOfSpecialType
