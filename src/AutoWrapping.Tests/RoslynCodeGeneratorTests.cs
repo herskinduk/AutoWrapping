@@ -17,14 +17,25 @@ namespace AutoWrapping.Tests
             _sut = CreateRoslynCodeGenerator();
         }
 
+        // The two translations represent the most common translations
         public RoslynCodeGenerator CreateRoslynCodeGenerator()
         {
             return new RoslynCodeGenerator(
-                new List<TypeTranslationInfo> { 
+                new List<TypeTranslationInfo>() { 
                     new TypeTranslationInfo() { 
                         ActualType = typeof(SpecialType), 
                         TranslatedType = "TranslatedSpecialType", 
-                        TranslationExpression = "new TranslatedSpecialType({0})" } });
+                        ForwardTranslationExpression = "new TranslatedSpecialType(target)",
+                        ReverseTranslationExpression = "target.InnerWrappedObject"
+                    },
+                    new TypeTranslationInfo() { 
+                        ActualType = typeof(List<SpecialType>), 
+                        TranslatedType = "global::System.Collections.Generic.List<TranslatedSpecialType>", 
+                        ForwardTranslationExpression = "target.Select(t => new TranslatedSpecialType(t)).ToList()",
+                        ReverseTranslationExpression = "target.Select(t => t.InnerWrapperObject).ToList()"
+                    }
+                }
+            );
         }
 
         [Fact]
@@ -41,6 +52,14 @@ namespace AutoWrapping.Tests
             var result = _sut.GenerateInterfaceForStaticMembers(typeof(String));
 
             Assert.Contains("interface IString", result);
+        }
+
+        [Fact]
+        public void GenerateInterfaceForStaticMembers_WithAnyClass_MustNotAddCtor()
+        {
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(String));
+
+            Assert.DoesNotMatch("\\spublic String()\\s{", result);
         }
 
         [Fact]
@@ -130,6 +149,39 @@ namespace AutoWrapping.Tests
 
             Assert.Contains("void Method(global::System.Collections.Generic.List<TranslatedSpecialType> input);", result);
         }
+
+        [Fact]
+        public void GenerateClass_WithClassHavingMethodAcceptingParameterOfSpecialType_MustTranslateForwarededParameters()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfSpecialType));
+
+            Assert.Contains("return _innerWrappedObject.Method(input.InnerWrappedObject)", result);
+        }
+
+        [Fact]
+        public void GenerateClass_WithClassHavingMethodReturningSpecialType_MustTranslateReturnExpression()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethodReturningSpecialType));
+
+            Assert.Contains("return new TranslatedSpecialType(_innerWrappedObject.Method());", result);
+        }
+
+        [Fact]
+        public void GenerateClass_WithClassHavingGetPropertyOfSpecialType_MustTranslateReturnExpression()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstancePropertyOfSpecialType));
+
+            Assert.Contains("return new TranslatedSpecialType(_innerWrappedObject.Property);", result);
+        }
+
+        [Fact]
+        public void GenerateClass_WithClassHavingSetPropertyOfSpecialType_MustTranslateReturnExpression()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstancePropertyOfSpecialType));
+
+            Assert.Contains("_innerWrappedObject.Property = value.InnerWrappedObject;", result);
+        }
+
 
         [Fact]
         public void GenerateClassForStaticMembers_WithAnyClass_DeclaresPublicClass()

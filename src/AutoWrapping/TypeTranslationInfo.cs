@@ -9,6 +9,7 @@ namespace AutoWrapping
     {
         public Type ActualType { get; set; }
         public string TranslatedType { get; set; }
-        public string TranslationExpression { get; set; }
+        public string ForwardTranslationExpression { get; set; }
+        public string ReverseTranslationExpression { get; set; }
     }
 }

@@ -181,7 +181,7 @@ namespace AutoWrapping
                                     ))
                                 }.Where(ad =>
                                     (_symbol.GetMethod != null && ad.IsKind(SyntaxKind.GetAccessorDeclaration)) ||
-                                    (_symbol.GetMethod != null && ad.IsKind(SyntaxKind.GetAccessorDeclaration)))
+                                    (_symbol.SetMethod != null && ad.IsKind(SyntaxKind.SetAccessorDeclaration)))
                             )
                         )));
             }
@@ -294,15 +294,15 @@ namespace AutoWrapping
                     new InstanceMethodBlockRewriter(method) as CSharpSyntaxRewriter;
 
                 var syntax = CodeGenerator.CreateMethodDeclaration(method, _workspace, destination);
-                var updatedSyntax = _typeUpdater.Visit(syntax);
-
+                
                 if (destination == CodeGenerationDestination.ClassType)
                 {
-                    updatedSyntax = methodRewriter.Visit(updatedSyntax);
+                    syntax = methodRewriter.Visit(syntax);
                 }
+                syntax = _typeUpdater.Visit(syntax);
 
-                if (updatedSyntax != null)
-                    list.Add(updatedSyntax as MemberDeclarationSyntax);
+                if (syntax != null)
+                    list.Add(syntax as MemberDeclarationSyntax);
             }
             
             return list.ToArray();
@@ -320,14 +320,14 @@ namespace AutoWrapping
                     new InstancePropertyBlockRewriter(property) as CSharpSyntaxRewriter;
                 
                 var syntax = CodeGenerator.CreatePropertyDeclaration(property, _workspace, destination, CodeGenerationOptions.Default);
-                var updatedSyntax = _typeUpdater.Visit(syntax);
 
                 if (destination == CodeGenerationDestination.ClassType)
                 {
-                    updatedSyntax = propertyRewriter.Visit(updatedSyntax);
+                    syntax = propertyRewriter.Visit(syntax);
                 }
-                
-                list.Add(updatedSyntax as MemberDeclarationSyntax);
+                syntax = _typeUpdater.Visit(syntax);
+
+                list.Add(syntax as MemberDeclarationSyntax);
             }
 
             return list.ToArray();
