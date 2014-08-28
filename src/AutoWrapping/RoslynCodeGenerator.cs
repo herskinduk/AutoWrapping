@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.MSBuild;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -192,7 +193,7 @@ namespace AutoWrapping
         #endregion
 
         private readonly IEnumerable<TypeTranslationInfo> _specialTypes;
-        private Workspace _workspace = new CustomWorkspace();
+        private Workspace _workspace = MSBuildWorkspace.Create();
         private readonly RoslynTypeRewriter _typeUpdater;
 
         // TODO: Inject naming strategies for namespaces, interfaces, innerobject etc.

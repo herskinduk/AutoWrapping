@@ -5,14 +5,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{ED6F4726-CF25-4D9D-80DC-6031512D0DBC}</ProjectGuid>
+    <ProjectGuid>{27B9D32E-1A16-4455-963B-9C0659A9D0DC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AutoWrapping.Tests</RootNamespace>
-    <AssemblyName>AutoWrapping.Tests</AssemblyName>
+    <RootNamespace>AutoWrapping.Tests.Integration</RootNamespace>
+    <AssemblyName>AutoWrapping.Tests.Integration</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>d50cc706</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>b1010d11</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,47 +32,36 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FakeItEasy">
-      <HintPath>..\AutoWrapping\packages\FakeItEasy.1.23.0\lib\net40\FakeItEasy.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CodeAnalysis, Version=0.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.CodeAnalysis">
       <HintPath>..\AutoWrapping\packages\Microsoft.CodeAnalysis.Common.0.7.4052301-beta\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=0.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp">
       <HintPath>..\AutoWrapping\packages\Microsoft.CodeAnalysis.CSharp.0.7.4052301-beta\lib\net45\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces, Version=0.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces">
       <HintPath>..\AutoWrapping\packages\Microsoft.CodeAnalysis.CSharp.Workspaces.0.7.4052301-beta\lib\net45\Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.VisualBasic, Version=0.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.CodeAnalysis.VisualBasic">
       <HintPath>..\AutoWrapping\packages\Microsoft.CodeAnalysis.VisualBasic.0.7.4052301-beta\lib\net45\Microsoft.CodeAnalysis.VisualBasic.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces, Version=0.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces">
       <HintPath>..\AutoWrapping\packages\Microsoft.CodeAnalysis.VisualBasic.Workspaces.0.7.4052301-beta\lib\net45\Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CodeAnalysis.Workspaces, Version=0.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces">
       <HintPath>..\AutoWrapping\packages\Microsoft.CodeAnalysis.Workspaces.Common.0.7.4052301-beta\lib\net45\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
     </Reference>
-    <Reference Include="Sitecore.Kernel, Version=7.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Sitecore.Kernel">
       <HintPath>..\..\lib\Sitecore.Kernel.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable, Version=1.1.20.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="System.Collections.Immutable">
       <HintPath>..\AutoWrapping\packages\Microsoft.Bcl.Immutable.1.1.20-beta\lib\portable-net45+win8\System.Collections.Immutable.dll</HintPath>
     </Reference>
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Reflection.Metadata, Version=1.0.11.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="System.Reflection.Metadata">
       <HintPath>..\AutoWrapping\packages\Microsoft.Bcl.Metadata.1.0.11-alpha\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -90,20 +79,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SitecoreIntegrationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RoslynCodeGeneratorTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AutoWrapping\AutoWrapping.csproj">
       <Project>{97015FFD-B813-48E0-A1A0-59A19556BB6A}</Project>
       <Name>AutoWrapping</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

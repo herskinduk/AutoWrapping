@@ -49,16 +49,9 @@ namespace AutoWrapping
         public override SyntaxNode VisitPropertyDeclaration(PropertyDeclarationSyntax node)
         {
             return base.VisitPropertyDeclaration(
-                node.Update(
-                    node.AttributeLists,
-                    SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)),
-                    UpdateType(node.Type),
-                    node.ExplicitInterfaceSpecifier,
-                    node.Identifier,
-                    UpdateAccessorList(node.AccessorList, node.Type),
-                    node.Initializer,
-                    node.SemicolonToken
-                ));
+                node.WithType(UpdateType(node.Type))
+                    .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
+                    .WithAccessorList(UpdateAccessorList(node.AccessorList, node.Type)));
         }
 
         private BlockSyntax UpdateMethodBody(BlockSyntax blockSyntax, TypeSyntax returnTypeSyntax, ParameterListSyntax parameterListSyntax)
@@ -165,7 +158,7 @@ namespace AutoWrapping
             return typeSyntax;
         }
 
-        private INamedTypeSymbol ExtractRoslynSymbol(Type type)
+        private ITypeSymbol ExtractRoslynSymbol(Type type)
         {
             var tree = CSharpSyntaxTree.ParseText(string.Format("using {0};", type.Namespace));
 
@@ -183,6 +176,11 @@ namespace AutoWrapping
                 return namespaceSymbol.GetTypeMembers(BaseTypeName(type))
                     .FirstOrDefault()
                         .Construct(type.GenericTypeArguments.Select(gta => ExtractRoslynSymbol(gta)).ToArray());
+            }
+
+            if(type.IsArray)
+            {
+                return CodeGenerationSymbolFactory.CreateArrayTypeSymbol(namespaceSymbol.GetTypeMembers(BaseTypeName(type)).FirstOrDefault());
             }
 
             return namespaceSymbol.GetTypeMembers(BaseTypeName(type)).FirstOrDefault();
@@ -207,7 +205,11 @@ namespace AutoWrapping
             {
                 return string.Format(
                     "{0}",
-                    t.Name.Substring(0, t.Name.LastIndexOf("`", StringComparison.InvariantCulture)));
+                    t.Name.Substring(0, t.Name.IndexOf("`", StringComparison.InvariantCulture)));
+            }
+            else if (t.IsArray)
+            {
+                return t.Name.Substring(0, t.Name.LastIndexOf("[", StringComparison.InvariantCulture));
             }
 
             return t.Name;
