@@ -26,7 +26,9 @@ namespace AutoWrapping
             // Not the correct way of getting rid of compiler generated getter/setter
             if (node.AttributeLists.Any(attrList => 
                 attrList.Attributes.Any(attr => 
-                    attr.Name.ToFullString().Contains("System.Runtime.CompilerServices.CompilerGeneratedAttribute"))))
+                    attr.Name.ToFullString().Contains("CompilerGeneratedAttribute")))||
+                node.Identifier.ToFullString().StartsWith("get_")||
+                node.Identifier.ToFullString().StartsWith("set_"))
             {
                 return null;
             }
@@ -58,7 +60,8 @@ namespace AutoWrapping
         {
             if (blockSyntax != null)
             {
-                var specialType = _typeTranslation.FirstOrDefault(tt => ExtractRoslynSymbol(tt.ActualType).ToDisplayString() == returnTypeSyntax.ToFullString().Replace("global::", ""));
+                //var specialType = _typeTranslation.FirstOrDefault(tt => ExtractRoslynSymbol(tt.ActualType).ToDisplayString() == returnTypeSyntax.ToFullString().Replace("global::", ""));
+                var specialType = _typeTranslation.FirstOrDefault(tt => PrettyTypeName(tt.ActualType) == returnTypeSyntax.ToFullString().Replace("global::", ""));
             
                 if (specialType != null)
                 {
@@ -93,8 +96,8 @@ namespace AutoWrapping
         private SyntaxNode WrapForwardedIdentifier(IdentifierNameSyntax identifier, ParameterListSyntax parameterListSyntax)
         {
             var parameter = parameterListSyntax.Parameters.FirstOrDefault(p => p.Identifier.ToFullString() == identifier.ToFullString());
-            var specialType = _typeTranslation.FirstOrDefault(tt => ExtractRoslynSymbol(tt.ActualType).ToDisplayString() == parameter.Type.ToFullString().Replace("global::", ""));
-            
+            var specialType = _typeTranslation.FirstOrDefault(tt => PrettyTypeName(tt.ActualType) == parameter.Type.ToFullString().Replace("global::", ""));
+
             if (specialType != null)
             {
                 var wrappedExpression = SyntaxFactory.ParseExpression(specialType.ReverseTranslationExpression);
@@ -127,7 +130,7 @@ namespace AutoWrapping
 
         private AccessorListSyntax UpdateAccessorList(AccessorListSyntax accessorListSyntax, TypeSyntax type)
         {
-            var specialType = _typeTranslation.FirstOrDefault(tt => ExtractRoslynSymbol(tt.ActualType).ToDisplayString() == type.ToFullString().Replace("global::", ""));
+            var specialType = _typeTranslation.FirstOrDefault(tt => PrettyTypeName(tt.ActualType) == type.ToFullString().Replace("global::", ""));
             
             if (specialType != null)
             {
@@ -148,7 +151,7 @@ namespace AutoWrapping
         private TypeSyntax UpdateType(TypeSyntax typeSyntax)
         {
             // TODO: figure out a better way to handle global::
-            var specialType = _typeTranslation.FirstOrDefault(tt => ExtractRoslynSymbol(tt.ActualType).ToDisplayString() == typeSyntax.ToFullString().Replace("global::",""));
+            var specialType = _typeTranslation.FirstOrDefault(tt => PrettyTypeName(tt.ActualType) == typeSyntax.ToFullString().Replace("global::", ""));
             
             if (specialType != null)
             {
@@ -192,11 +195,11 @@ namespace AutoWrapping
             {
                 return string.Format(
                     "{0}<{1}>",
-                    t.Name.Substring(0, t.Name.LastIndexOf("`", StringComparison.InvariantCulture)),
+                    t.FullName.Substring(0, t.FullName.LastIndexOf("`", StringComparison.InvariantCulture)),
                     string.Join(", ", t.GetGenericArguments().Select(PrettyTypeName)));
             }
 
-            return t.Name;
+            return t.FullName;
         }
 
         static string BaseTypeName(Type t)

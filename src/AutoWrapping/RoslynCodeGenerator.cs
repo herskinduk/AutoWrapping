@@ -238,11 +238,14 @@ namespace AutoWrapping
             var classDeclaration = SyntaxFactory.ClassDeclaration(type.Name + "Wrapper")
                 .AddModifiers(new[] { SyntaxFactory.Token(SyntaxKind.PublicKeyword) });
 
-            classDeclaration = classDeclaration.AddMembers(
-                SyntaxFactory.FieldDeclaration(
-                    SyntaxFactory.VariableDeclaration(
-                        SyntaxFactory.ParseTypeName(typeSymbol.ToDisplayString()),
-                        SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>(new [] {SyntaxFactory.VariableDeclarator("_innerWrapperObject")}))));
+            if (!isStatic)
+            {
+                classDeclaration = classDeclaration.AddMembers(
+                    SyntaxFactory.FieldDeclaration(
+                        SyntaxFactory.VariableDeclaration(
+                            SyntaxFactory.ParseTypeName(typeSymbol.ToDisplayString()),
+                            SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>(new[] { SyntaxFactory.VariableDeclarator("_innerWrapperObject") }))));
+            }
 
             var methods = CreateMethodDeclarations(typeSymbol, isStatic, CodeGenerationDestination.ClassType);
             if (methods.Any())

@@ -22,14 +22,14 @@ namespace AutoWrapping
 
             foreach (var staticClass in _configuration.StaticClasses)
             {
-                sb.Append(_codeGenerator.GenerateInterfaceForStaticMembers(staticClass));
-                sb.Append(_codeGenerator.GenerateClassForStaticMembers(staticClass));
+                sb.AppendLine(_codeGenerator.GenerateInterfaceForStaticMembers(staticClass));
+                sb.AppendLine(_codeGenerator.GenerateClassForStaticMembers(staticClass));
             }
 
-            foreach (var instaceClass in _configuration.InstanceClasses)
+            foreach (var instanceClass in _configuration.InstanceClasses)
             {
-                sb.Append(_codeGenerator.GenerateInterfaceForInstanceMembers(instaceClass));
-                sb.Append(_codeGenerator.GenerateClassForInstanceMembers(instaceClass));
+                sb.AppendLine(_codeGenerator.GenerateInterfaceForInstanceMembers(instanceClass));
+                sb.AppendLine(_codeGenerator.GenerateClassForInstanceMembers(instanceClass));
             }
 
             return sb.ToString();
