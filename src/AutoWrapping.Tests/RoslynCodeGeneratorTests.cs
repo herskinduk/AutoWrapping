@@ -67,7 +67,7 @@ namespace AutoWrapping.Tests
         {
             var result = _sut.GenerateInterfaceForStaticMembers(typeof(String));
 
-            Assert.StartsWith("public interface IString", result);
+            Assert.Contains("public interface IString", result);
         }
 
         [Fact]
@@ -287,6 +287,38 @@ namespace AutoWrapping.Tests
 
             Assert.DoesNotContain("get_Property", result);
         }
+
+        [Fact]
+        public void GenerateClassForStaticMembers_WithClassHavingObsoleteProperty_MustNotAddProperty()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(ClassWithObsoleteStaticProperty));
+
+            Assert.DoesNotContain("public string Property", result);
+        }
+
+        [Fact]
+        public void GenerateInterfaceForInstanceMembers_WithClassHavingObsoleteMethod_MustNotAddMethod()
+        {
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(ClassWithObsoleteInstanceMethod));
+
+            Assert.DoesNotContain("string Method()", result);
+        }
+
+        [Fact]
+        public void GenerateInterface_WithAnyClass_EnclosesInterfaceInNameSpace()
+        {
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(String));
+
+            Assert.Matches(new System.Text.RegularExpressions.Regex("namespace.+\\{.*interface.*\\}", System.Text.RegularExpressions.RegexOptions.Singleline), result);
+        }
+
+        [Fact]
+        public void GenerateClass_WithAnyClass_EnclosesClassInNameSpace()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(String));
+
+            Assert.Matches(new System.Text.RegularExpressions.Regex("namespace.+\\{.*class.*\\}", System.Text.RegularExpressions.RegexOptions.Singleline), result);
+        }
     }
 
     public static class StaticClassWithMethods
@@ -333,6 +365,12 @@ namespace AutoWrapping.Tests
         public SpecialType Method() { throw new NotImplementedException(); }
     }
 
+    public class ClassWithObsoleteInstanceMethod
+    {
+        [Obsolete("This is obsolete")]
+        public string Method() { throw new NotImplementedException(); }
+    }
+
     public class ClassWithInstanceMethodAcceptingParameterOfSpecialType
     {
         public void Method(SpecialType input) { throw new NotImplementedException(); }
@@ -350,6 +388,13 @@ namespace AutoWrapping.Tests
             throw new NotImplementedException();
         }
     }
+
+    public class ClassWithObsoleteStaticProperty
+    {
+        [Obsolete("This is obsolete")]
+        public static string Property { get; set; }
+    }
+
 
     public class SpecialType
     {

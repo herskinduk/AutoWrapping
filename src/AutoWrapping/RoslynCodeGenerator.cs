@@ -14,6 +14,8 @@ namespace AutoWrapping
 {
     public class RoslynCodeGenerator
     {
+
+        #region Visitors
         private class StaticMethodBlockRewriter : CSharpSyntaxRewriter
         {
             private readonly IMethodSymbol _symbol;
@@ -187,12 +189,14 @@ namespace AutoWrapping
             }
 
         }
-
+        #endregion
 
         private readonly IEnumerable<TypeTranslationInfo> _specialTypes;
         private Workspace _workspace = new CustomWorkspace();
         private readonly RoslynTypeRewriter _typeUpdater;
 
+        // TODO: Inject naming strategies for namespaces, interfaces, innerobject etc.
+        // TODO: Inject strategies for stripping/keeping attributes on members
         public RoslynCodeGenerator(IEnumerable<TypeTranslationInfo> specialTypes)
         {
             _specialTypes = specialTypes;
@@ -200,20 +204,27 @@ namespace AutoWrapping
         }
 
 
+
         #region Class Generation
 
         public string GenerateClassForStaticMembers(Type type)
         {
-            var compilationUnit = SyntaxFactory.CompilationUnit()
+            var ns = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(type.Namespace))
                 .AddMembers(new MemberDeclarationSyntax[] { CreateClass(type, true) });
+
+            var compilationUnit = SyntaxFactory.CompilationUnit()
+                .AddMembers(new[] { ns });
 
             return Formatter.Format(compilationUnit, new CustomWorkspace()).ToFullString();
         }
 
         public string GenerateClassForInstanceMembers(Type type)
         {
-            var compilationUnit = SyntaxFactory.CompilationUnit()
+            var ns = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(type.Namespace))
                 .AddMembers(new MemberDeclarationSyntax[] { CreateClass(type, false) });
+
+            var compilationUnit = SyntaxFactory.CompilationUnit()
+                .AddMembers(new[] { ns });
 
             return Formatter.Format(compilationUnit, new CustomWorkspace()).ToFullString();
         }
@@ -250,16 +261,22 @@ namespace AutoWrapping
 
         public string GenerateInterfaceForStaticMembers(Type type)
         {
-            var compilationUnit = SyntaxFactory.CompilationUnit()
+            var ns = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(type.Namespace))
                 .AddMembers(new MemberDeclarationSyntax[] { CreateInterface(type, true) });
+
+            var compilationUnit = SyntaxFactory.CompilationUnit()
+                .AddMembers(new[] { ns });
 
             return Formatter.Format(compilationUnit, new CustomWorkspace()).ToFullString();
         }
 
         public string GenerateInterfaceForInstanceMembers(Type type)
         {
-            var compilationUnit = SyntaxFactory.CompilationUnit()
+            var ns = SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(type.Namespace))
                 .AddMembers(new MemberDeclarationSyntax[] { CreateInterface(type, false) });
+
+            var compilationUnit = SyntaxFactory.CompilationUnit()
+                .AddMembers(new[] { ns });
 
             return Formatter.Format(compilationUnit, new CustomWorkspace()).ToFullString();
         }
@@ -284,7 +301,11 @@ namespace AutoWrapping
 
         private MemberDeclarationSyntax[] CreateMethodDeclarations(ITypeSymbol typeSymbol, bool isStatic, CodeGenerationDestination destination)
         {
-            var methods = typeSymbol.GetMembers().Where(member => member.Kind == SymbolKind.Method && member.DeclaredAccessibility == Accessibility.Public && member.IsStatic == isStatic);
+            var methods = typeSymbol.GetMembers().Where(member => 
+                member.Kind == SymbolKind.Method && 
+                member.DeclaredAccessibility == Accessibility.Public &&
+                member.IsStatic == isStatic &&
+                !member.GetAttributes().Any(attr => attr.AttributeClass.Name == "ObsoleteAttribute"));
             var list = new List<MemberDeclarationSyntax>();
 
             foreach (var method in methods.Select(m => m as IMethodSymbol))
@@ -310,7 +331,11 @@ namespace AutoWrapping
 
         private MemberDeclarationSyntax[] CreatePropertyDeclarations(ITypeSymbol typeSymbol, bool isStatic, CodeGenerationDestination destination)
         {
-            var properties = typeSymbol.GetMembers().Where(member => member.Kind == SymbolKind.Property && member.DeclaredAccessibility == Accessibility.Public && member.IsStatic == isStatic);
+            var properties = typeSymbol.GetMembers().Where(member => 
+                member.Kind == SymbolKind.Property &&
+                member.DeclaredAccessibility == Accessibility.Public &&
+                member.IsStatic == isStatic &&
+                !member.GetAttributes().Any(attr => attr.AttributeClass.Name == "ObsoleteAttribute"));
             var list = new List<MemberDeclarationSyntax>();
 
             foreach (var property in properties.Select(m => m as IPropertySymbol))

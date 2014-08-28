@@ -24,7 +24,9 @@ namespace AutoWrapping
         public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             // Not the correct way of getting rid of compiler generated getter/setter
-            if (node.AttributeLists.Count() > 0)
+            if (node.AttributeLists.Any(attrList => 
+                attrList.Attributes.Any(attr => 
+                    attr.Name.ToFullString().Contains("System.Runtime.CompilerServices.CompilerGeneratedAttribute"))))
             {
                 return null;
             }
