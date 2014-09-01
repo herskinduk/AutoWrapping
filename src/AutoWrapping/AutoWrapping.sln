@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests", "..\Au
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests.Integration", "..\AutoWrapping.Tests.Integration\AutoWrapping.Tests.Integration.csproj", "{4B0911EC-019A-4A29-8626-6252C0BA37BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Example", "..\AutoWrapping.Example\AutoWrapping.Example.csproj", "{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{4B0911EC-019A-4A29-8626-6252C0BA37BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B0911EC-019A-4A29-8626-6252C0BA37BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4B0911EC-019A-4A29-8626-6252C0BA37BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
