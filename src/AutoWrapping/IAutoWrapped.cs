@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AutoWrapper.IntegrationTest
+namespace AutoWrapping
 {
-    public class Class1
+    public interface IAutoWrapped
     {
     }
 }

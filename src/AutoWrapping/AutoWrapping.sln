@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping", "AutoWrappin
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests", "..\AutoWrapping.Tests\AutoWrapping.Tests.csproj", "{ED6F4726-CF25-4D9D-80DC-6031512D0DBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapper.IntegrationTest", "..\AutoWrapper.IntegrationTest\AutoWrapper.IntegrationTest.csproj", "{4B0911EC-019A-4A29-8626-6252C0BA37BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests.Integration", "..\AutoWrapping.Tests.Integration\AutoWrapping.Tests.Integration.csproj", "{4B0911EC-019A-4A29-8626-6252C0BA37BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

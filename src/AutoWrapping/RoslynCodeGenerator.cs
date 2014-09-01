@@ -28,34 +28,57 @@ namespace AutoWrapping
 
             public override SyntaxNode VisitBlock(BlockSyntax node)
             {
-                if (!node.Statements.Any())
+                if (!node.Statements.Any() && node.Parent is MethodDeclarationSyntax)
                 {
-                    return SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
-                        new[]
-                        {
-                            SyntaxFactory.ReturnStatement(
-                                SyntaxFactory.InvocationExpression(
-                                    SyntaxFactory.MemberAccessExpression(
-                                        kind: SyntaxKind.SimpleMemberAccessExpression,
-                                        expression: SyntaxFactory.IdentifierName("global::"+_symbol.ReceiverType.ToDisplayString()),
-                                        name: _symbol.IsGenericMethod ? 
-                                            SyntaxFactory.GenericName(
-                                                SyntaxFactory.Identifier(_symbol.Name), 
-                                                SyntaxFactory.TypeArgumentList(SyntaxFactory.SeparatedList<TypeSyntax>(
-                                                    _symbol.TypeArguments.Select(ta => SyntaxFactory.ParseTypeName(ta.Name))))) as SimpleNameSyntax :
-                                            SyntaxFactory.IdentifierName(_symbol.Name) as SimpleNameSyntax),
-                                    SyntaxFactory.ArgumentList(
-                                        SyntaxFactory.SeparatedList<ArgumentSyntax>(
-                                            _symbol.Parameters.Select(p =>
-                                                SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Name)))))
-                                )
-                            )
-                        }
-                    ));
+
+                    if (((node.Parent as MethodDeclarationSyntax).ReturnType is PredefinedTypeSyntax) &&
+                        ((node.Parent as MethodDeclarationSyntax).ReturnType as PredefinedTypeSyntax).Keyword.IsKind(SyntaxKind.VoidKeyword))
+                    {
+                        return SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
+                            new[]
+                            {
+                                SyntaxFactory.ExpressionStatement(CreateInstanceInvocationStatement("global::"+_symbol.ReceiverType.ToDisplayString()))
+                            }));
+                    }
+                    else
+                    {
+                        return SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
+                            new[]
+                            {
+                                SyntaxFactory.ReturnStatement(CreateInstanceInvocationStatement("global::"+_symbol.ReceiverType.ToDisplayString()))
+                            }));
+
+                    }
                 }
 
                 return base.VisitBlock(node);
             }
+
+            private ExpressionSyntax CreateInstanceInvocationStatement(string identifierName)
+            {
+                return SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        kind: SyntaxKind.SimpleMemberAccessExpression,
+                        expression: SyntaxFactory.IdentifierName(identifierName),
+                        name: _symbol.IsGenericMethod ?
+                            SyntaxFactory.GenericName(
+                                SyntaxFactory.Identifier(_symbol.Name),
+                                SyntaxFactory.TypeArgumentList(SyntaxFactory.SeparatedList<TypeSyntax>(
+                                    _symbol.TypeArguments.Select(ta => SyntaxFactory.ParseTypeName(ta.Name))))) as SimpleNameSyntax :
+                            SyntaxFactory.IdentifierName(_symbol.Name) as SimpleNameSyntax),
+                    CreateArgumentList());
+            }
+
+            private ArgumentListSyntax CreateArgumentList()
+            {
+                return SyntaxFactory.ArgumentList(
+                    SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                        _symbol.Parameters.Select(p => p.RefKind == RefKind.Out
+                            ? SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Name)).WithRefOrOutKeyword(SyntaxFactory.Token(SyntaxKind.OutKeyword)) :
+                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Name)))));
+            }
+
+            
         }
 
         private class StaticPropertyBlockRewriter : CSharpSyntaxRewriter
@@ -93,13 +116,13 @@ namespace AutoWrapping
                                         .WithBody(SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
                                             new[]
                                             {
-                                                SyntaxFactory.ParseStatement("global::"+_symbol.ContainingType.ToDisplayString()+" = value;")
+                                                SyntaxFactory.ParseStatement("global::"+_symbol.ContainingType.ToDisplayString()+"."+_symbol.Name+" = value;")
                                             }
                                         )
                                     ))
                                 }.Where(ad => 
                                     (_symbol.GetMethod != null && ad.IsKind(SyntaxKind.GetAccessorDeclaration)) ||
-                                    (_symbol.GetMethod != null && ad.IsKind(SyntaxKind.GetAccessorDeclaration)))
+                                    (_symbol.SetMethod != null && ad.IsKind(SyntaxKind.SetAccessorDeclaration)))
                             )
                         )));
             }
@@ -117,36 +140,58 @@ namespace AutoWrapping
 
             public override SyntaxNode VisitBlock(BlockSyntax node)
             {
-                if (!node.Statements.Any())
+                if (!node.Statements.Any() && node.Parent is MethodDeclarationSyntax)
                 {
-                    return SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
-                        new[]
-                        {
-                            SyntaxFactory.ReturnStatement(
-                                SyntaxFactory.InvocationExpression(
-                                    SyntaxFactory.MemberAccessExpression(
-                                        kind: SyntaxKind.SimpleMemberAccessExpression,
-                                        expression: SyntaxFactory.IdentifierName("_innerWrappedObject"),
-                                        name: _symbol.IsGenericMethod ? 
-                                            SyntaxFactory.GenericName(
-                                                SyntaxFactory.Identifier(_symbol.Name), 
-                                                SyntaxFactory.TypeArgumentList(SyntaxFactory.SeparatedList<TypeSyntax>(
-                                                    _symbol.TypeArguments.Select(ta => SyntaxFactory.ParseTypeName(ta.Name))))) as SimpleNameSyntax :
-                                            SyntaxFactory.IdentifierName(_symbol.Name) as SimpleNameSyntax),
-                                    SyntaxFactory.ArgumentList(
-                                        SyntaxFactory.SeparatedList<ArgumentSyntax>(
-                                            _symbol.Parameters.Select(p =>
-                                                SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Name)))))
-                                )
-                            )
-                        }
-                    ));
+
+                    if (((node.Parent as MethodDeclarationSyntax).ReturnType is PredefinedTypeSyntax) &&
+                        ((node.Parent as MethodDeclarationSyntax).ReturnType as PredefinedTypeSyntax).Keyword.IsKind(SyntaxKind.VoidKeyword))
+                    {
+                        return SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
+                            new[]
+                            {
+                                SyntaxFactory.ExpressionStatement(CreateInstanceInvocationStatement())
+                            }
+                        ));
+                    }
+                    else
+                    {
+                        return SyntaxFactory.Block(SyntaxFactory.List<StatementSyntax>(
+                            new[]
+                            {
+                                SyntaxFactory.ReturnStatement(CreateInstanceInvocationStatement())
+                            }
+                        ));
+                    }
                 }
 
                 return base.VisitBlock(node);
             }
 
+            private ExpressionSyntax CreateInstanceInvocationStatement()
+            {
+                return SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        kind: SyntaxKind.SimpleMemberAccessExpression,
+                        expression: SyntaxFactory.IdentifierName("_innerWrappedObject"),
+                        name: _symbol.IsGenericMethod ? 
+                            SyntaxFactory.GenericName(
+                                SyntaxFactory.Identifier(_symbol.Name), 
+                                SyntaxFactory.TypeArgumentList(SyntaxFactory.SeparatedList<TypeSyntax>(
+                                    _symbol.TypeArguments.Select(ta => SyntaxFactory.ParseTypeName(ta.Name))))) as SimpleNameSyntax :
+                            SyntaxFactory.IdentifierName(_symbol.Name) as SimpleNameSyntax),
+                    CreateArgumentList());
+            }
+
+            private ArgumentListSyntax CreateArgumentList()
+            {
+                return SyntaxFactory.ArgumentList(
+                    SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                        _symbol.Parameters.Select(p => p.RefKind == RefKind.Out
+                            ? SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Name)).WithRefOrOutKeyword(SyntaxFactory.Token(SyntaxKind.OutKeyword)) :
+                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName(p.Name)))));
+            }
         }
+
 
         private class InstancePropertyBlockRewriter : CSharpSyntaxRewriter
         {
@@ -235,17 +280,56 @@ namespace AutoWrapping
         {
             var typeSymbol = ExtractRoslynSymbol(type) as ITypeSymbol;
 
-            var classDeclaration = SyntaxFactory.ClassDeclaration(type.Name + "Wrapper")
-                .AddModifiers(new[] { SyntaxFactory.Token(SyntaxKind.PublicKeyword) });
+            var instanceClassSyntax = SyntaxFactory.ParseCompilationUnit(@"
+public class TargetClassIdentifier : TargetInterfaceIdentifier
+{
+    private TargetType _innerWrappedObject;
 
-            if (!isStatic)
-            {
-                classDeclaration = classDeclaration.AddMembers(
-                    SyntaxFactory.FieldDeclaration(
-                        SyntaxFactory.VariableDeclaration(
-                            SyntaxFactory.ParseTypeName(typeSymbol.ToDisplayString()),
-                            SyntaxFactory.SeparatedList<VariableDeclaratorSyntax>(new[] { SyntaxFactory.VariableDeclarator("_innerWrapperObject") }))));
-            }
+    public object InnerWrappedObject
+    {
+        get { return _innerWrappedObject; }
+        set { _innerWrappedObject = value as TargetType; }
+    }
+
+    public TargetClassIdentifier(object innerWrappedObject)
+    {
+        _innerWrappedObject = innerWrappedObject as TargetType;
+    }
+}
+");
+            
+            var staticClassSyntax = SyntaxFactory.ParseCompilationUnit(@"
+public class TargetClassIdentifier : TargetInterfaceIdentifier
+{
+    public TargetClassIdentifier()
+    {
+    }
+}
+");
+
+
+            var classDeclaration = (isStatic ? staticClassSyntax : instanceClassSyntax).ChildNodes().OfType<ClassDeclarationSyntax>().First();
+            classDeclaration = classDeclaration
+                .ReplaceNodes<ClassDeclarationSyntax, IdentifierNameSyntax>(
+                    classDeclaration.DescendantNodesAndSelf().OfType<IdentifierNameSyntax>().Where(ins => ins.Identifier.Text == "TargetType"),
+                    (original, rewritten) => SyntaxFactory.ParseName(type.FullName));
+            classDeclaration = classDeclaration
+                .ReplaceTokens<ClassDeclarationSyntax>(
+                    classDeclaration
+                        .DescendantNodesAndTokensAndSelf()
+                        .Where(nodeOrToken => nodeOrToken.IsToken)
+                        .Select(nodeOrToken => nodeOrToken.AsToken())
+                        .Where(st => st.Text == "TargetClassIdentifier"),
+                    (original, rewritten) => SyntaxFactory.ParseToken(type.Name + "Wrapper"));
+
+            classDeclaration = classDeclaration
+                .ReplaceTokens<ClassDeclarationSyntax>(
+                    classDeclaration
+                        .DescendantNodesAndTokensAndSelf()
+                        .Where(nodeOrToken => nodeOrToken.IsToken)
+                        .Select(nodeOrToken => nodeOrToken.AsToken())
+                        .Where(st => st.Text == "TargetInterfaceIdentifier"),
+                        (original, rewritten) => SyntaxFactory.ParseToken("I" + type.Name));
 
             var methods = CreateMethodDeclarations(typeSymbol, isStatic, CodeGenerationDestination.ClassType);
             if (methods.Any())
@@ -287,10 +371,15 @@ namespace AutoWrapping
 
         private InterfaceDeclarationSyntax CreateInterface(Type type, bool isStatic)
         {
+            var baselist = isStatic ?
+                new[] { SyntaxFactory.ParseTypeName("global::AutoWrapping.IAutoWrapped") } :
+                new[] { SyntaxFactory.ParseTypeName("global::AutoWrapping.IAutoWrappedInstance") };
+
             var typeSymbol = ExtractRoslynSymbol(type);
 
             var interfaceDeclaration = SyntaxFactory.InterfaceDeclaration("I" + type.Name)
-                .AddModifiers(new[] { SyntaxFactory.Token(SyntaxKind.PublicKeyword) });
+                .AddModifiers(new[] { SyntaxFactory.Token(SyntaxKind.PublicKeyword) })
+                .AddBaseListTypes(baselist);
 
             if (CreateMethodDeclarations(typeSymbol, isStatic, CodeGenerationDestination.InterfaceType).Any())
                 interfaceDeclaration = interfaceDeclaration.AddMembers(CreateMethodDeclarations(typeSymbol, isStatic, CodeGenerationDestination.InterfaceType));
@@ -314,6 +403,8 @@ namespace AutoWrapping
 
             foreach (var method in methods.Select(m => m as IMethodSymbol))
             {
+                if (method.Name == ".ctor") continue;
+
                 var methodRewriter = isStatic ? 
                     new StaticMethodBlockRewriter(method) as CSharpSyntaxRewriter : 
                     new InstanceMethodBlockRewriter(method) as CSharpSyntaxRewriter;
@@ -324,7 +415,13 @@ namespace AutoWrapping
                 {
                     syntax = methodRewriter.Visit(syntax);
                 }
-                syntax = _typeUpdater.Visit(syntax);
+
+                syntax = _typeUpdater.Visit(syntax as SyntaxNode);
+
+                if (destination == CodeGenerationDestination.ClassType && syntax != null)
+                {
+                    syntax = (syntax as MethodDeclarationSyntax).WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                }
 
                 if (syntax != null)
                     list.Add(syntax as MemberDeclarationSyntax);
@@ -356,6 +453,10 @@ namespace AutoWrapping
                 }
                 syntax = _typeUpdater.Visit(syntax);
 
+                if (destination == CodeGenerationDestination.ClassType && syntax != null)
+                {
+                    syntax = (syntax as PropertyDeclarationSyntax).WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                }
                 list.Add(syntax as MemberDeclarationSyntax);
             }
 

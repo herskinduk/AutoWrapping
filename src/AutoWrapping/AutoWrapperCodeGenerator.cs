@@ -20,6 +20,9 @@ namespace AutoWrapping
         {
             var sb = new StringBuilder();
 
+            sb.AppendLine("using System;");
+            sb.AppendLine("using System.Linq;");
+
             foreach (var staticClass in _configuration.StaticClasses)
             {
                 sb.AppendLine(_codeGenerator.GenerateInterfaceForStaticMembers(staticClass));

@@ -79,6 +79,14 @@ namespace AutoWrapping.Tests
         }
 
         [Fact]
+        public void GenerateInterfaceForStaticMembers_WithClassHavingStaticMethods_DoesNotUsePublicKeywordOnMethods()
+        {
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(StaticClassWithMethods));
+
+            Assert.DoesNotContain("public string MethodB(string input);", result);
+        }
+
+        [Fact]
         public void GenerateInterfaceForStaticMembers_WithClassHavingStaticMethodAndGenericParameter_AddsMethodsToSyntaxTree()
         {
             var result = _sut.GenerateInterfaceForStaticMembers(typeof(ClassWithStaticGenericMethod));
@@ -151,12 +159,21 @@ namespace AutoWrapping.Tests
         }
 
         [Fact]
-        public void GenerateClass_WithClassHavingMethodAcceptingParameterOfSpecialType_MustTranslateForwarededParameters()
+        public void GenerateClass_WithClassHavingInstanceMethodAcceptingOutParameter_MustAddOutKeywordForwarededParameters()
         {
-            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingParameterOfSpecialType));
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethodAcceptingOutParameter));
 
-            Assert.Contains("return _innerWrappedObject.Method(input.InnerWrappedObject)", result);
+            Assert.Contains("_innerWrappedObject.Method(out input)", result);
         }
+
+        [Fact]
+        public void GenerateClass_WithClassHavingStaticMethodAcceptingOutParameter_MustAddOutKeywordForwarededParameters()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(ClassWithStaticMethodAcceptingOutParameter));
+
+            Assert.Contains("ClassWithStaticMethodAcceptingOutParameter.Method(out input)", result);
+        }
+
 
         [Fact]
         public void GenerateClass_WithClassHavingMethodReturningSpecialType_MustTranslateReturnExpression()
@@ -220,7 +237,7 @@ namespace AutoWrapping.Tests
         {
             var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethod));
 
-            Assert.Contains("return _innerWrappedObject.Method(input);", result);
+            Assert.Contains("_innerWrappedObject.Method(input);", result);
         }
 
 
@@ -319,6 +336,54 @@ namespace AutoWrapping.Tests
 
             Assert.Matches(new System.Text.RegularExpressions.Regex("namespace.+\\{.*class.*\\}", System.Text.RegularExpressions.RegexOptions.Singleline), result);
         }
+
+        [Fact]
+        public void GenerateClass_ClassWithInstanceMehtodReturningVoid_ShouldNotHaveReturnStatment()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(ClassWithInstanceMethodReturningVoid));
+
+            Assert.DoesNotContain("return _innerWrappedObject.Method();", result);
+        }
+
+        [Fact]
+        public void GenerateClass_ClassWithStaticMehtodReturningVoid_ShouldNotHaveReturnStatment()
+        {
+            var result = _sut.GenerateClassForStaticMembers(typeof(ClassWithStaticMethodReturningVoid));
+
+            Assert.DoesNotContain("return ", result);
+        }
+
+        [Fact]
+        public void GenerateClass_ClassWithInstanceMembers_MustHaveCtorAcceptingInnerObject()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(String));
+
+            Assert.Contains("public StringWrapper(object innerWrappedObject)", result);
+        }
+
+        [Fact]
+        public void GenerateClass_WithAnyClass_MustHaveGeneratedInterfaceInBaseList()
+        {
+            var result = _sut.GenerateClassForInstanceMembers(typeof(String));
+
+            Assert.Contains("public class StringWrapper : IString", result);
+        }
+
+        [Fact]
+        public void GenerateInterface_WithInstanceClass_MustHaveIAutoWrappedInstanceInterfaceInBaseList()
+        {
+            var result = _sut.GenerateInterfaceForInstanceMembers(typeof(String));
+
+            Assert.Contains("public interface IString : global::AutoWrapping.IAutoWrappedInstance", result);
+        }
+
+        [Fact]
+        public void GenerateInterface_WithStaticClass_MustHaveIAutoWrappedInterfaceInBaseList()
+        {
+            var result = _sut.GenerateInterfaceForStaticMembers(typeof(String));
+
+            Assert.Contains("public interface IString : global::AutoWrapping.IAutoWrapped", result);
+        }
     }
 
     public static class StaticClassWithMethods
@@ -355,6 +420,16 @@ namespace AutoWrapping.Tests
         public void Method(string input) { throw new NotImplementedException(); }
     }
 
+    public class ClassWithInstanceMethodReturningVoid
+    {
+        public void Method(string input) { throw new NotImplementedException(); }
+    }
+
+    public class ClassWithStaticMethodReturningVoid
+    {
+        public static void Method(string input) { throw new NotImplementedException(); }
+    }
+
     public class ClassWithInstancePropertyOfSpecialType
     {
         public SpecialType Property { get; set; }
@@ -374,6 +449,17 @@ namespace AutoWrapping.Tests
     public class ClassWithInstanceMethodAcceptingParameterOfSpecialType
     {
         public void Method(SpecialType input) { throw new NotImplementedException(); }
+    }
+
+
+    public class ClassWithInstanceMethodAcceptingOutParameter
+    {
+        public void Method(out string input) { throw new NotImplementedException(); }
+    }
+
+    public class ClassWithStaticMethodAcceptingOutParameter
+    {
+        public static void Method(out string input) { throw new NotImplementedException(); }
     }
 
     public class ClassWithInstanceMethodAcceptingParameterOfGenericSpecialType

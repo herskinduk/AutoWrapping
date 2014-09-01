@@ -27,8 +27,10 @@ namespace AutoWrapping
             if (node.AttributeLists.Any(attrList => 
                 attrList.Attributes.Any(attr => 
                     attr.Name.ToFullString().Contains("CompilerGeneratedAttribute")))||
-                node.Identifier.ToFullString().StartsWith("get_")||
-                node.Identifier.ToFullString().StartsWith("set_"))
+                node.Identifier.ToFullString().StartsWith("get_") ||
+                node.Identifier.ToFullString().StartsWith("set_") ||
+                node.Identifier.ToFullString().StartsWith("add_")||
+                node.Identifier.ToFullString().StartsWith("remove_"))
             {
                 return null;
             }
@@ -36,7 +38,7 @@ namespace AutoWrapping
             return base.VisitMethodDeclaration(
                 node.Update(
                     node.AttributeLists,
-                    SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)),
+                    SyntaxFactory.TokenList(),
                     UpdateReturnType(node.ReturnType),
                     node.ExplicitInterfaceSpecifier,
                     node.Identifier,
@@ -52,7 +54,7 @@ namespace AutoWrapping
         {
             return base.VisitPropertyDeclaration(
                 node.WithType(UpdateType(node.Type))
-                    .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
+                    .WithModifiers(SyntaxFactory.TokenList())
                     .WithAccessorList(UpdateAccessorList(node.AccessorList, node.Type)));
         }
 

@@ -77,6 +77,8 @@
   <ItemGroup>
     <Compile Include="AutoWrapperCodeGenerator.cs" />
     <Compile Include="AutoWrapperConfiguration.cs" />
+    <Compile Include="IAutoWrapped.cs" />
+    <Compile Include="IAutoWrappedInstance.cs" />
     <Compile Include="RoslynStringExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoslynCodeGenerator.cs" />
