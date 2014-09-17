@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping", "AutoWrapping.csproj", "{97015FFD-B813-48E0-A1A0-59A19556BB6A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping", "AutoWrapping\AutoWrapping.csproj", "{97015FFD-B813-48E0-A1A0-59A19556BB6A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests", "..\AutoWrapping.Tests\AutoWrapping.Tests.csproj", "{ED6F4726-CF25-4D9D-80DC-6031512D0DBC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests", "AutoWrapping.Tests\AutoWrapping.Tests.csproj", "{ED6F4726-CF25-4D9D-80DC-6031512D0DBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests.Integration", "..\AutoWrapping.Tests.Integration\AutoWrapping.Tests.Integration.csproj", "{4B0911EC-019A-4A29-8626-6252C0BA37BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests.Integration", "AutoWrapping.Tests.Integration\AutoWrapping.Tests.Integration.csproj", "{4B0911EC-019A-4A29-8626-6252C0BA37BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Example", "..\AutoWrapping.Example\AutoWrapping.Example.csproj", "{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Example", "AutoWrapping.Example\AutoWrapping.Example.csproj", "{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Nuget", "AutoWrapping.Nuget\AutoWrapping.Nuget.csproj", "{0451BAEF-DF2E-4B98-8644-94EE9415E389}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0451BAEF-DF2E-4B98-8644-94EE9415E389}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0451BAEF-DF2E-4B98-8644-94EE9415E389}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0451BAEF-DF2E-4B98-8644-94EE9415E389}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0451BAEF-DF2E-4B98-8644-94EE9415E389}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
