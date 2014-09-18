@@ -81,6 +81,10 @@
       <LastGenOutput>AutoWrappingKickstart.cs</LastGenOutput>
     </None>
     <None Include="packages.config" />
+    <None Include="TestAssemblyListing.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>TestAssemblyListing.txt</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
@@ -90,6 +94,13 @@
       <Project>{97015ffd-b813-48e0-a1a0-59a19556bb6a}</Project>
       <Name>AutoWrapping</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TestAssemblyListing.txt">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>TestAssemblyListing.tt</DependentUpon>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

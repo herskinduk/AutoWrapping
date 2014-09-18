@@ -11,7 +11,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Tests.Integrat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Example", "AutoWrapping.Example\AutoWrapping.Example.csproj", "{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoWrapping.Nuget", "AutoWrapping.Nuget\AutoWrapping.Nuget.csproj", "{0451BAEF-DF2E-4B98-8644-94EE9415E389}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget specs", "Nuget specs", "{529F2374-B6DB-4381-8407-5AF0BF91C81C}"
+	ProjectSection(SolutionItems) = preProject
+		AutoWrapping\AutoWrapping.nuspec = AutoWrapping\AutoWrapping.nuspec
+		AutoWrapping.Sitecore.nuspec = AutoWrapping.Sitecore.nuspec
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +39,6 @@ Global
 		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9DC8756B-3FB1-4959-B8F4-2DA6039BFA48}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0451BAEF-DF2E-4B98-8644-94EE9415E389}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0451BAEF-DF2E-4B98-8644-94EE9415E389}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0451BAEF-DF2E-4B98-8644-94EE9415E389}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0451BAEF-DF2E-4B98-8644-94EE9415E389}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

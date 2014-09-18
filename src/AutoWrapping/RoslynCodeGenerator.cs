@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.MSBuild;
 using System;
 using System.Collections.Generic;
@@ -240,13 +241,27 @@ namespace AutoWrapping
         private readonly IEnumerable<TypeTranslationInfo> _specialTypes;
         private Workspace _workspace = MSBuildWorkspace.Create();
         private readonly RoslynTypeRewriter _typeUpdater;
+        private IEnumerable<Assembly> _assemblies; // MEF loading
 
         // TODO: Inject naming strategies for namespaces, interfaces, innerobject etc.
         // TODO: Inject strategies for stripping/keeping attributes on members
-        public RoslynCodeGenerator(IEnumerable<TypeTranslationInfo> specialTypes)
+        //public RoslynCodeGenerator(IEnumerable<TypeTranslationInfo> specialTypes)
+        //{
+        //    _specialTypes = specialTypes;
+        //    _typeUpdater = new RoslynTypeRewriter(_specialTypes); // TODO: Refactor to DI
+        //}
+
+        public RoslynCodeGenerator(IEnumerable<TypeTranslationInfo> specialTypes, IEnumerable<Assembly> assemblies)
         {
+            // TODO: Complete member initialization
             _specialTypes = specialTypes;
             _typeUpdater = new RoslynTypeRewriter(_specialTypes); // TODO: Refactor to DI
+            if (assemblies != null)
+                _workspace = new CustomWorkspace(MefHostServices.Create(assemblies));
+        }
+        public RoslynCodeGenerator(IEnumerable<TypeTranslationInfo> specialTypes)
+            : this(specialTypes, null)
+        {
         }
 
 

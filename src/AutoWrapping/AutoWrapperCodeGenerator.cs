@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace AutoWrapping
@@ -10,11 +11,17 @@ namespace AutoWrapping
         private readonly AutoWrapperConfiguration _configuration;
         private readonly RoslynCodeGenerator _codeGenerator;
 
+        public AutoWrapperCodeGenerator(AutoWrapperConfiguration configuration, IEnumerable<Assembly> assemblies)
+        {
+            this._configuration = configuration;
+            _codeGenerator = new RoslynCodeGenerator(configuration.SpecialTypes, assemblies);
+        }
         public AutoWrapperCodeGenerator(AutoWrapperConfiguration configuration)
         {
             this._configuration = configuration;
             _codeGenerator = new RoslynCodeGenerator(configuration.SpecialTypes);
         }
+
 
         public string Generate()
         {
