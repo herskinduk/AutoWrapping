@@ -3,6 +3,8 @@
 
 lib/*.dll
 
+## Ensure that generated code does not get added.
+src/AutoWrapping.Example/*.cs
 
 # User-specific files
 *.suo

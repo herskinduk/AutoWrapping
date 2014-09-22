@@ -3,11 +3,11 @@
   <metadata>
     <id>AutoWrapping.Core</id>
     <version>1.0.0-alpha</version>
-    <title>AutoWrapping framework</title>
-    <authors>KHN</authors>
-    <owners>KHN</owners>
+    <title>AutoWrapping.Core</title>
+    <authors>Kern Herskind Nightingale</authors>
+    <owners>Kern Herskind Nightingale</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>AutoWrapping framework</description>
+    <description>AutoWrapping is a framework for generating interfaces and wrapper classes for both static/instance classes with lack of abstraction.</description>
     <releaseNotes>Initial release.</releaseNotes>
     <copyright>Copyright 2014</copyright>
   </metadata>

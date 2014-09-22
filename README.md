@@ -9,20 +9,19 @@ Making Sitecore easier to test by providing the missing abstractions.
 Usage
 -----
 
-1. Copy the AutoWrapping.tt file into your Sitecore Visual Studio project
-2. Adjust the path to Sitecore.Kernel and Lucene.Net dlls (if needed) at the top of the AutoWrapping.tt file
-3. Add references to System.Configuration, System.Web, Sitecore.Kernel and Lucene.Net in your project
-4. Run T4 template (right click .tt file and chose "Run Custom Tool")
- 
-Enjoy
+1. Choose (new/existing) a Visual Studio project where you want the abstractions/wrapper to reside
+2. Add references to System.Configuration, System.Web, Sitecore.Kernel and Lucene.Net in your project (AutoWrappingKickstart.tt expects find Sitecore.Kernel in $(ProjectDir)\..\lib)
+3. Install AutoWrapping.Sitecore nupkg from this myget (**PRE-RELEASE**) feed: https://www.myget.org/F/autowrapping/ 
+
+Enjoy!
 
 Example
 -------
 
-AutoWrapping.tt generates a file called AutoWrapping.cs containing interfaces and wrapper classes. There are two types of wrappers:
+AutoWrappingKickstart.tt generates a file called AutoWrappingKickstart.cs containing interfaces and wrapper classes. There are two types of wrappers:
 
 - Static class wrappers
-- Type without appropriate interface
+- Instance type wrappers
 
 Here is a code example of how you could use the interfaces and wrappers:
 
@@ -75,7 +74,19 @@ Here is a code example of how you could use the interfaces and wrappers:
 
 So obviously in the example above we have to write more code to use ILog and LogWrapper, but we get the option of replacing ILog in test scenarios. The sort types you may wish to do this for could be Sitecore.Context, Item and Database.
 
+Troubleshooting
+-------
+
+* I can't find the nuget packages.
+    * Have you turned on support for pre-release packages?
+    * Have you setup the myget feed in Visual Studio?
+* The generated code errors
+    * Is the path to Sitecore.Kernel is correct in the .tt file?
+    * Have you got a project reference Sitecore.Kernel.dll?
+* The auto generated code is missing the abstraction I need
+    * Have you tried adding it to the type setup code in the .tt file? 
+
 Disclaimer
 ----------
 
-This is very much an experimental tool and have had no testing.
+This is very much an experimental tool and have had little testing.

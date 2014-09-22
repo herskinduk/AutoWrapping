@@ -4,10 +4,10 @@
     <id>AutoWrapping.Sitecore</id>
     <version>1.0.0-alpha</version>
     <title>AutoWrapping - Sitecore</title>
-    <authors>KHN</authors>
-    <owners>KHN</owners>
+    <authors>Kern Herskind Nightingale</authors>
+    <owners>Kern Herskind Nightingale</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>AutoWrapping - Sitecore</description>
+    <description>AutoWrapping.Sitecore contains example configuration for generating Sitecore abstrations.</description>
     <releaseNotes>Initial Release</releaseNotes>
     <copyright>Copyright 2014</copyright>
 	<dependencies>
