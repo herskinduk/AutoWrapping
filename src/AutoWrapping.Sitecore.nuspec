@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>AutoWrapping.Sitecore</id>
-    <version>1.0.0-alpha</version>
+    <version>$version$</version>
     <title>AutoWrapping - Sitecore</title>
     <authors>Kern Herskind Nightingale</authors>
     <owners>Kern Herskind Nightingale</owners>
@@ -11,7 +11,7 @@
     <releaseNotes>Initial Release</releaseNotes>
     <copyright>Copyright 2014</copyright>
 	<dependencies>
-	  <dependency id="AutoWrapping.Core" version="1.0.0-alpha" />
+	  <dependency id="AutoWrapping.Core" version="$version$" />
 	</dependencies>
   </metadata>
  	<files>
