@@ -2,10 +2,14 @@
 using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
+using Microsoft.CodeAnalysis.CSharp.Formatting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.MSBuild;
+using Microsoft.CodeAnalysis.Simplification;
+using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -240,6 +244,7 @@ namespace AutoWrapping
 
         private readonly IEnumerable<TypeTranslationInfo> _specialTypes;
         private Workspace _workspace = MSBuildWorkspace.Create();
+        private SyntaxGenerator _generator = SyntaxGenerator.GetGenerator(new AdhocWorkspace(), LanguageNames.CSharp);
         private readonly RoslynTypeRewriter _typeUpdater;
         private IEnumerable<Assembly> _assemblies; // MEF loading
 
@@ -257,7 +262,7 @@ namespace AutoWrapping
             _specialTypes = specialTypes;
             _typeUpdater = new RoslynTypeRewriter(_specialTypes); // TODO: Refactor to DI
             if (assemblies != null)
-                _workspace = new CustomWorkspace(MefHostServices.Create(assemblies));
+                _workspace = new AdhocWorkspace(MefHostServices.Create(assemblies));
         }
         public RoslynCodeGenerator(IEnumerable<TypeTranslationInfo> specialTypes)
             : this(specialTypes, null)
@@ -276,7 +281,46 @@ namespace AutoWrapping
             var compilationUnit = SyntaxFactory.CompilationUnit()
                 .AddMembers(new[] { ns });
 
-            return Formatter.Format(compilationUnit, new CustomWorkspace()).ToFullString();
+
+            return ReducerFormat(compilationUnit).ToFullString();
+        }
+
+        private SyntaxNode ReducerFormat(SyntaxNode root)
+        {
+            var workspace = new AdhocWorkspace();
+
+            string projName = "NewProject";
+            var projectId = ProjectId.CreateNewId();
+            var versionStamp = VersionStamp.Create();
+            var projectInfo = ProjectInfo.Create(projectId, versionStamp, projName, projName, LanguageNames.CSharp);
+            var newProject = workspace.AddProject(projectInfo);
+            var newDocument = workspace.AddDocument(newProject.Id, "NewFile.cs", SourceText.From(Formatter.Format(root, workspace).ToFullString()));
+
+            var annotator = new AnnotatorSyntaxRewritter();
+
+            var updatedDocument = newDocument
+                .WithSyntaxRoot(annotator.Visit(newDocument.GetSyntaxRootAsync().Result));
+
+            var model = updatedDocument.GetSemanticModelAsync().Result;
+
+            var annotatedNodes = updatedDocument.GetSyntaxRootAsync().Result.GetAnnotatedNodes(Simplifier.Annotation);
+
+            return Simplifier.ReduceAsync(updatedDocument).Result.GetSyntaxRootAsync().Result;
+        }
+
+        private class AnnotatorSyntaxRewritter : CSharpSyntaxRewriter
+        {
+            public override SyntaxNode VisitQualifiedName(QualifiedNameSyntax node)
+            {
+                if (node.ToString() == "System.String")
+                {
+                    return SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)).WithTrailingTrivia(node.GetTrailingTrivia());
+                }
+
+                node = node.WithAdditionalAnnotations(Simplifier.Annotation);
+                return base.VisitQualifiedName(node);
+            }
+
         }
 
         public string GenerateClassForInstanceMembers(Type type)
@@ -287,7 +331,7 @@ namespace AutoWrapping
             var compilationUnit = SyntaxFactory.CompilationUnit()
                 .AddMembers(new[] { ns });
 
-            return Formatter.Format(compilationUnit, new CustomWorkspace()).ToFullString();
+            return ReducerFormat(compilationUnit).ToFullString();
         }
 
 
@@ -346,11 +390,11 @@ public class TargetClassIdentifier : TargetInterfaceIdentifier
                         .Where(st => st.Text == "TargetInterfaceIdentifier"),
                         (original, rewritten) => SyntaxFactory.ParseToken("I" + type.Name));
 
-            var methods = CreateMethodDeclarations(typeSymbol, isStatic, CodeGenerationDestination.ClassType);
+            var methods = CreateMethodDeclarations(typeSymbol, isStatic, true); //, CodeGenerationDestination.ClassType);
             if (methods.Any())
                 classDeclaration = classDeclaration.AddMembers(methods);
 
-            var properties = CreatePropertyDeclarations(typeSymbol, isStatic, CodeGenerationDestination.ClassType);
+            var properties = CreatePropertyDeclarations(typeSymbol, isStatic, true);//, CodeGenerationDestination.ClassType);
             if (properties.Any())
                 classDeclaration = classDeclaration.AddMembers(properties);
 
@@ -370,7 +414,7 @@ public class TargetClassIdentifier : TargetInterfaceIdentifier
             var compilationUnit = SyntaxFactory.CompilationUnit()
                 .AddMembers(new[] { ns });
 
-            return Formatter.Format(compilationUnit, new CustomWorkspace()).ToFullString();
+            return ReducerFormat(compilationUnit).ToFullString();
         }
 
         public string GenerateInterfaceForInstanceMembers(Type type)
@@ -381,14 +425,14 @@ public class TargetClassIdentifier : TargetInterfaceIdentifier
             var compilationUnit = SyntaxFactory.CompilationUnit()
                 .AddMembers(new[] { ns });
 
-            return Formatter.Format(compilationUnit, new CustomWorkspace()).ToFullString();
+            return ReducerFormat(compilationUnit).ToFullString();
         }
 
         private InterfaceDeclarationSyntax CreateInterface(Type type, bool isStatic)
         {
             var baselist = isStatic ?
-                new[] { SyntaxFactory.ParseTypeName("global::AutoWrapping.IAutoWrapped") } :
-                new[] { SyntaxFactory.ParseTypeName("global::AutoWrapping.IAutoWrappedInstance") };
+                new BaseTypeSyntax[] { SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("global::AutoWrapping.IAutoWrapped")) } :
+                new BaseTypeSyntax[] { SyntaxFactory.SimpleBaseType(SyntaxFactory.ParseTypeName("global::AutoWrapping.IAutoWrappedInstance")) };
 
             var typeSymbol = ExtractRoslynSymbol(type);
 
@@ -396,21 +440,22 @@ public class TargetClassIdentifier : TargetInterfaceIdentifier
                 .AddModifiers(new[] { SyntaxFactory.Token(SyntaxKind.PublicKeyword) })
                 .AddBaseListTypes(baselist);
 
-            if (CreateMethodDeclarations(typeSymbol, isStatic, CodeGenerationDestination.InterfaceType).Any())
-                interfaceDeclaration = interfaceDeclaration.AddMembers(CreateMethodDeclarations(typeSymbol, isStatic, CodeGenerationDestination.InterfaceType));
+            if (CreateMethodDeclarations(typeSymbol, isStatic, false).Any())
+                interfaceDeclaration = interfaceDeclaration.AddMembers(CreateMethodDeclarations(typeSymbol, isStatic, false));
 
-            if (CreatePropertyDeclarations(typeSymbol, isStatic, CodeGenerationDestination.InterfaceType).Any())
-                interfaceDeclaration = interfaceDeclaration.AddMembers(CreatePropertyDeclarations(typeSymbol, isStatic, CodeGenerationDestination.InterfaceType));
+            if (CreatePropertyDeclarations(typeSymbol, isStatic, false).Any())
+                interfaceDeclaration = interfaceDeclaration.AddMembers(CreatePropertyDeclarations(typeSymbol, isStatic, false));
 
             return interfaceDeclaration;
         }
 
         #endregion
 
-        private MemberDeclarationSyntax[] CreateMethodDeclarations(ITypeSymbol typeSymbol, bool isStatic, CodeGenerationDestination destination)
+        private MemberDeclarationSyntax[] CreateMethodDeclarations(ITypeSymbol typeSymbol, bool isStatic, bool isClass)
         {
             var methods = typeSymbol.GetMembers().Where(member => 
                 member.Kind == SymbolKind.Method && 
+                ((IMethodSymbol)member).MethodKind == MethodKind.Ordinary &&
                 member.DeclaredAccessibility == Accessibility.Public &&
                 member.IsStatic == isStatic &&
                 !member.GetAttributes().Any(attr => attr.AttributeClass.Name == "ObsoleteAttribute"));
@@ -424,16 +469,18 @@ public class TargetClassIdentifier : TargetInterfaceIdentifier
                     new StaticMethodBlockRewriter(method) as CSharpSyntaxRewriter : 
                     new InstanceMethodBlockRewriter(method) as CSharpSyntaxRewriter;
 
-                var syntax = CodeGenerator.CreateMethodDeclaration(method, _workspace, destination);
+
+                //var syntax = method.DeclaringSyntaxReferences.First().GetSyntax();
+                var syntax = isClass ? _generator.MethodDeclaration(method) : (_generator.MethodDeclaration(method) as MethodDeclarationSyntax).WithBody(null).WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
                 
-                if (destination == CodeGenerationDestination.ClassType)
+                if (isClass)
                 {
                     syntax = methodRewriter.Visit(syntax);
                 }
 
                 syntax = _typeUpdater.Visit(syntax as SyntaxNode);
 
-                if (destination == CodeGenerationDestination.ClassType && syntax != null)
+                if (isClass && syntax != null)
                 {
                     syntax = (syntax as MethodDeclarationSyntax).WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
                 }
@@ -445,7 +492,7 @@ public class TargetClassIdentifier : TargetInterfaceIdentifier
             return list.ToArray();
         }
 
-        private MemberDeclarationSyntax[] CreatePropertyDeclarations(ITypeSymbol typeSymbol, bool isStatic, CodeGenerationDestination destination)
+        private MemberDeclarationSyntax[] CreatePropertyDeclarations(ITypeSymbol typeSymbol, bool isStatic, bool isClass)
         {
             var properties = typeSymbol.GetMembers().Where(member => 
                 member.Kind == SymbolKind.Property &&
@@ -459,20 +506,40 @@ public class TargetClassIdentifier : TargetInterfaceIdentifier
                 var propertyRewriter = isStatic ? 
                     new StaticPropertyBlockRewriter(property) as CSharpSyntaxRewriter : 
                     new InstancePropertyBlockRewriter(property) as CSharpSyntaxRewriter;
-                
-                var syntax = CodeGenerator.CreatePropertyDeclaration(property, _workspace, destination, CodeGenerationOptions.Default);
 
-                if (destination == CodeGenerationDestination.ClassType)
-                {
-                    syntax = propertyRewriter.Visit(syntax);
-                }
-                syntax = _typeUpdater.Visit(syntax);
+                //var propertySyntax = property.DeclaringSyntaxReferences.First().GetSyntax();
+                var propertySyntax = isClass ? _generator.PropertyDeclaration(property) : (_generator.PropertyDeclaration(property) as PropertyDeclarationSyntax).WithAccessorList(SyntaxFactory.AccessorList(
+                        SyntaxFactory.List<AccessorDeclarationSyntax>(
+                            new List<AccessorDeclarationSyntax> {
+                                SyntaxFactory.AccessorDeclaration(
+                                    SyntaxKind.GetAccessorDeclaration)
+                                .WithKeyword(
+                                    SyntaxFactory.Token(
+                                        SyntaxKind.GetKeyword))
+                                .WithSemicolonToken(
+                                    SyntaxFactory.Token(
+                                        SyntaxKind.SemicolonToken)),
+                                SyntaxFactory.AccessorDeclaration(
+                                    SyntaxKind.SetAccessorDeclaration)
+                                .WithKeyword(
+                                    SyntaxFactory.Token(
+                                        SyntaxKind.SetKeyword))
+                                .WithSemicolonToken(
+                                    SyntaxFactory.Token(
+                                        SyntaxKind.SemicolonToken))}.Where(acc => (property.GetMethod != null && acc.Keyword.Kind() == SyntaxKind.GetKeyword) || (property.SetMethod != null && acc.Keyword.Kind() == SyntaxKind.SetKeyword)))));
 
-                if (destination == CodeGenerationDestination.ClassType && syntax != null)
+
+                if (isClass)
                 {
-                    syntax = (syntax as PropertyDeclarationSyntax).WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                    propertySyntax = propertyRewriter.Visit(propertySyntax);
                 }
-                list.Add(syntax as MemberDeclarationSyntax);
+                propertySyntax = _typeUpdater.Visit(propertySyntax);
+
+                if (isClass && propertySyntax != null)
+                {
+                    propertySyntax = (propertySyntax as PropertyDeclarationSyntax).WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                }
+                list.Add(propertySyntax as MemberDeclarationSyntax);
             }
 
             return list.ToArray();
@@ -483,7 +550,7 @@ public class TargetClassIdentifier : TargetInterfaceIdentifier
             var tree = CSharpSyntaxTree.ParseText(string.Format("using {0};", type.Namespace));
 
             var compilation = CSharpCompilation.Create(type.Assembly.FullName)
-                .AddReferences(new MetadataFileReference(type.Assembly.Location))
+                .AddReferences(MetadataReference.CreateFromFile(type.Assembly.Location))
                 .AddSyntaxTrees(tree);
 
             var root = (CompilationUnitSyntax)tree.GetRoot();

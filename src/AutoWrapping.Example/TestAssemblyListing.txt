@@ -5,9 +5,16 @@
 + Microsoft.CodeAnalysis.VisualBasic
 + Microsoft.CodeAnalysis.VisualBasic.Workspaces
 + Microsoft.CodeAnalysis.Workspaces
++ Microsoft.CodeAnalysis.Workspaces.Desktop
 + Sitecore.Kernel
 + System
 + System.Collections.Immutable
++ System.ComponentModel.Composition
++ System.Composition.AttributedModel
++ System.Composition.Convention
++ System.Composition.Hosting
++ System.Composition.Runtime
++ System.Composition.TypedParts
 + System.Configuration
 + System.Core
 + System.Reflection.Metadata
@@ -16,7 +23,6 @@
 + Microsoft.CSharp
 + System.Data
 + System.Xml
-+ System.ComponentModel.Composition
 + mscorlib
 AutoWrapping.Tests
 + FakeItEasy
@@ -85,3 +91,4 @@ AutoWrapping.Example
 + System.Xml
 + mscorlib
 Nuget specs
+Miscellaneous Files

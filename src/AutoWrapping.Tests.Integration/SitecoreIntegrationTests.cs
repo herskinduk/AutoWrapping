@@ -125,14 +125,14 @@ namespace AutoWrapping.Tests.Integration
                              select CSharpSyntaxTree.ParseText(source),
                 references: new[]
                 {
-                    new MetadataFileReference(typeof(object).Assembly.Location),
-                    new MetadataFileReference(typeof(AutoWrapping.IAutoWrapped).Assembly.Location),
-                    new MetadataFileReference(typeof(Sitecore.Context).Assembly.Location),
-                    new MetadataFileReference(typeof(System.Configuration.AppSettingsReader).Assembly.Location),
-                    new MetadataFileReference(typeof(System.Configuration.Provider.ProviderBase).Assembly.Location),
-                    new MetadataFileReference(typeof(System.Linq.Enumerable).Assembly.Location),
-                    new MetadataFileReference(typeof(System.Xml.ConformanceLevel).Assembly.Location),
-                    new MetadataFileReference(typeof(System.Web.ApplicationShutdownReason).Assembly.Location)
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(AutoWrapping.IAutoWrapped).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Sitecore.Context).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(System.Configuration.AppSettingsReader).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(System.Configuration.Provider.ProviderBase).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(System.Linq.Enumerable).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(System.Xml.ConformanceLevel).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(System.Web.ApplicationShutdownReason).Assembly.Location)
                 });
 
             EmitResult emitResult;

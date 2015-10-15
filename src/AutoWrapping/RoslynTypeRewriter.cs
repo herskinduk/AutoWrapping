@@ -3,10 +3,13 @@ using Microsoft.CodeAnalysis.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Simplification;
+using Microsoft.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -160,15 +163,31 @@ namespace AutoWrapping
                 return SyntaxFactory.ParseTypeName(specialType.TranslatedType);
             }
 
-            return typeSyntax;
+            //typeSyntax = EnsureFriendlyTypes(typeSyntax);
+
+            return typeSyntax.WithAdditionalAnnotations(Simplifier.Annotation, Formatter.Annotation);
         }
+
+        //private TypeSyntax EnsureFriendlyTypes(TypeSyntax typeSyntax)
+        //{
+        //    Simplifier.ReduceAsync
+        //    var qualifiedName = typeSyntax as QualifiedNameSyntax;
+            
+        //    if (qualifiedName != null)
+        //    {
+                
+        //        return qualifiedName.
+        //    }
+            
+        //    return typeSyntax.;
+        //}
 
         private ITypeSymbol ExtractRoslynSymbol(Type type)
         {
             var tree = CSharpSyntaxTree.ParseText(string.Format("using {0};", type.Namespace));
 
             var compilation = CSharpCompilation.Create(type.Assembly.FullName)
-                .AddReferences(new MetadataFileReference(type.Assembly.Location))
+                .AddReferences(MetadataReference.CreateFromFile(type.Assembly.Location))
                 .AddSyntaxTrees(tree);
 
             var root = (CompilationUnitSyntax)tree.GetRoot();
@@ -176,17 +195,19 @@ namespace AutoWrapping
             var nameInfo = model.GetSymbolInfo(root.Usings.FirstOrDefault().Name);
             var namespaceSymbol = (INamespaceSymbol)nameInfo.Symbol;
 
-            if (type.IsGenericType)
-            {
-                return namespaceSymbol.GetTypeMembers(BaseTypeName(type))
-                    .FirstOrDefault()
-                        .Construct(type.GenericTypeArguments.Select(gta => ExtractRoslynSymbol(gta)).ToArray());
-            }
+            // Broken
 
-            if(type.IsArray)
-            {
-                return CodeGenerationSymbolFactory.CreateArrayTypeSymbol(namespaceSymbol.GetTypeMembers(BaseTypeName(type)).FirstOrDefault());
-            }
+            //if (type.IsGenericType)
+            //{
+            //    return namespaceSymbol.GetTypeMembers(BaseTypeName(type))
+            //        .FirstOrDefault()
+            //            .Construct(type.GenericTypeArguments.Select(gta => ExtractRoslynSymbol(gta)).ToArray());
+            //}
+
+            //if(type.IsArray)
+            //{
+            //    return CodeGenerationSymbolFactory.CreateArrayTypeSymbol(namespaceSymbol.GetTypeMembers(BaseTypeName(type)).FirstOrDefault());
+            //}
 
             return namespaceSymbol.GetTypeMembers(BaseTypeName(type)).FirstOrDefault();
         }
@@ -280,7 +301,7 @@ namespace AutoWrapping
             if (symbol.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
             {
                 ITypeSymbol symbol2 = symbol.TypeArguments.First<ITypeSymbol>();
-                if (symbol2.TypeKind != TypeKind.PointerType)
+                if (symbol2.TypeKind != TypeKind.Pointer)
                 {
                     // Deveation
                     //return this.AddInformationTo<NullableTypeSyntax>(SyntaxFactory.NullableType(CreateSimpleTypeSyntax(symbol2 as INamedTypeSymbol)), symbol);
